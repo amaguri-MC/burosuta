@@ -342,6 +342,7 @@ public final class Combat {
 
 		if ((tick & 1) == 0) syncHudAndBars(server, all);
 		if ((tick & 3) == 0) syncHidden(server, all);
+		if (tick % 20 == 0) syncLooks(server);
 	}
 
 	private static void tickParticipant(LivingEntity e, BrawlState st) {
@@ -366,6 +367,23 @@ public final class Combat {
 			p.getFoodData().setFoodLevel(6);
 			p.getFoodData().setSaturation(0f);
 		}
+	}
+
+	/** 全員（観戦者も）に「どの実体がどのキャラの見た目か」を送る。試合外は空。 */
+	private static void syncLooks(MinecraftServer server) {
+		List<LivingEntity> es = new ArrayList<>();
+		for (Map.Entry<java.util.UUID, BrawlState> en : STATES.entrySet()) {
+			LivingEntity e = ENTITIES.get(en.getKey());
+			if (e != null && !e.isRemoved()) es.add(e);
+		}
+		int[] ids = new int[es.size()];
+		String[] bs = new String[es.size()];
+		for (int i = 0; i < es.size(); i++) {
+			ids[i] = es.get(i).getId();
+			bs[i] = STATES.get(es.get(i).getUUID()).brawlerId;
+		}
+		Net.LooksPayload pl = new Net.LooksPayload(ids, bs);
+		for (ServerPlayer p : server.getPlayerList().getPlayers()) ServerPlayNetworking.send(p, pl);
 	}
 
 	private static void syncHudAndBars(MinecraftServer server, List<LivingEntity> all) {

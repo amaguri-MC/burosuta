@@ -68,6 +68,7 @@ public final class Brawlers {
 		Integer last = LAST_ATTACK.get(user.getUUID());
 		if (last != null && now - last < def.attackCooldownTicks()) return false;
 		if (!Combat.consumeAmmo(user)) return false;
+		user.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
 		LAST_ATTACK.put(user.getUUID(), now);
 		Attacks.normal(lvl, user, def.id(), yawDeg);
 		return true;

@@ -75,6 +75,24 @@ public final class Net {
 		@Override public Type<BarsPayload> type() { return TYPE; }
 	}
 
+	/** S2C 見た目: 実体ID → キャラID（core が 20tick ごとに全プレイヤーへ。空=試合なし）。クライアントはこの実体をキャラのモデルで描く。 */
+	public record LooksPayload(int[] ids, String[] brawlers) implements CustomPacketPayload {
+		public static final Type<LooksPayload> TYPE = typeOf("looks");
+		public static final StreamCodec<RegistryFriendlyByteBuf, LooksPayload> CODEC = StreamCodec.of(
+				(b, p) -> {
+					b.writeVarIntArray(p.ids);
+					b.writeVarInt(p.brawlers.length);
+					for (String s : p.brawlers) b.writeUtf(s);
+				},
+				b -> {
+					int[] ids = b.readVarIntArray();
+					String[] bs = new String[b.readVarInt()];
+					for (int i = 0; i < bs.length; i++) bs[i] = b.readUtf();
+					return new LooksPayload(ids, bs);
+				});
+		@Override public Type<LooksPayload> type() { return TYPE; }
+	}
+
 	/** C2S 通常攻撃（左クリック or 右クリック）。yaw は度。brawler が受けて Brawlers.attack を呼ぶ。 */
 	public record AttackPayload(float yaw) implements CustomPacketPayload {
 		public static final Type<AttackPayload> TYPE = typeOf("attack");
@@ -97,6 +115,7 @@ public final class Net {
 		PayloadTypeRegistry.clientboundPlay().register(MatchPayload.TYPE, MatchPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(HiddenPayload.TYPE, HiddenPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(BarsPayload.TYPE, BarsPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(LooksPayload.TYPE, LooksPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(AttackPayload.TYPE, AttackPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(SuperPayload.TYPE, SuperPayload.CODEC);
 	}
