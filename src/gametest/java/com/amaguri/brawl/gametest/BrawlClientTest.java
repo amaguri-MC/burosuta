@@ -32,6 +32,34 @@ public class BrawlClientTest implements FabricClientGameTest {
 			server.runCommand("time set noon");
 			server.runCommand("weather clear");
 
+			// --- キャラ5人の並び（試合の外。ボットを置いて正面・背面・自分の三人称） ---
+			server.runCommand("fill -2 150 -2 18 150 18 minecraft:smooth_stone");
+			server.runCommand("tp @a 8 151 1 0 15");
+			server.runOnServer(ms -> {
+				net.minecraft.server.level.ServerPlayer pl = ms.getPlayerList().getPlayers().get(0);
+				net.minecraft.server.level.ServerLevel lvl = (net.minecraft.server.level.ServerLevel) pl.level();
+				String[] ids = {"rusty", "kaden", "gouen", "mimosa", "takomaru"};
+				for (int i = 0; i < ids.length; i++) {
+					com.amaguri.brawl.bot.BrawlBot b = com.amaguri.brawl.bot.BrawlBot.spawn(lvl,
+							new net.minecraft.world.phys.Vec3(2.5 + i * 3, 151, 7.5), ids[i], ids[i]);
+					if (b == null) continue;
+					b.setNoAi(true);
+					b.setYRot(180f); b.setYHeadRot(180f); b.setYBodyRot(180f);
+				}
+			});
+			context.waitTicks(50);
+			sp.getConnection().waitForChunksRender();
+			context.takeScreenshot(TestScreenshotOptions.of("lineup_front").disableCounterPrefix());
+			server.runCommand("tp @a 8 151 14 180 15");
+			context.waitTicks(10);
+			context.takeScreenshot(TestScreenshotOptions.of("lineup_back").disableCounterPrefix());
+			server.runOnServer(ms -> com.amaguri.brawl.core.Combat.join(ms.getPlayerList().getPlayers().get(0), "kaden"));
+			context.runOnClient(c -> c.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT));
+			context.waitTicks(30);
+			context.takeScreenshot(TestScreenshotOptions.of("self_front").disableCounterPrefix());
+			context.runOnClient(c -> c.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON));
+			server.runOnServer(ms -> com.amaguri.brawl.core.Combat.leave(ms.getPlayerList().getPlayers().get(0)));
+
 			server.runCommand("brawl start 9");
 			// 3秒カウントダウンが明けてから 3秒後
 			context.waitTicks(COUNTDOWN_TICKS + 60);
@@ -41,6 +69,10 @@ public class BrawlClientTest implements FabricClientGameTest {
 			// 10秒後
 			context.waitTicks(140);
 			context.takeScreenshot(TestScreenshotOptions.of("brawl_hud_10s").disableCounterPrefix());
+			context.runOnClient(c -> c.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK));
+			context.waitTicks(5);
+			context.takeScreenshot(TestScreenshotOptions.of("brawl_third_person").disableCounterPrefix());
+			context.runOnClient(c -> c.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON));
 
 			// マップ全体を真上から（スペクテイター）。100x100 ブロックが収まる高さ
 			ArenaLayout layout = ArenaMap.layout();

@@ -223,6 +223,11 @@ final class HudRenderer {
 
 	/** 縁取り文字（左上基準）。 */
 	static void outlined(GuiGraphicsExtractor g, Font font, String s, int x, int y, int col, int edge) {
+		if (!s.chars().allMatch(ch -> ch < 0x2000)) { // 日本語は8方向の縁取りだと潰れる → 影だけ
+			g.text(font, s, x + 1, y + 1, edge, false);
+			g.text(font, s, x, y, col, false);
+			return;
+		}
 		g.text(font, s, x - 1, y, edge, false);
 		g.text(font, s, x + 1, y, edge, false);
 		g.text(font, s, x, y - 1, edge, false);
