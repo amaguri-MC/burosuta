@@ -13,14 +13,14 @@ import net.minecraft.resources.Identifier;
 public final class Net {
 	private Net() {}
 
-	private static <T extends CustomPacketPayload> CustomPacketPayload.Type<T> type(String path) {
+	private static <T extends CustomPacketPayload> CustomPacketPayload.Type<T> typeOf(String path) {
 		return new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("brawl", path));
 	}
 
 	/** S2C 自分のステータス（core が 2tick ごとに試合中の各プレイヤーへ送る）。brawler="" は試合外。 */
 	public record HudPayload(String brawler, int hp, int maxHp, float ammo, int maxAmmo, float superCharge,
 			int cubes, boolean alive) implements CustomPacketPayload {
-		public static final Type<HudPayload> TYPE = type("hud");
+		public static final Type<HudPayload> TYPE = typeOf("hud");
 		public static final StreamCodec<RegistryFriendlyByteBuf, HudPayload> CODEC = StreamCodec.of(
 				(b, p) -> {
 					b.writeUtf(p.brawler); b.writeVarInt(p.hp); b.writeVarInt(p.maxHp); b.writeFloat(p.ammo);
@@ -39,7 +39,7 @@ public final class Net {
 	 */
 	public record MatchPayload(int phase, int countdown, int alive, int total, double gasMinX, double gasMinZ,
 			double gasMaxX, double gasMaxZ, int gasSecondsToNext, int myRank) implements CustomPacketPayload {
-		public static final Type<MatchPayload> TYPE = type("match");
+		public static final Type<MatchPayload> TYPE = typeOf("match");
 		public static final StreamCodec<RegistryFriendlyByteBuf, MatchPayload> CODEC = StreamCodec.of(
 				(b, p) -> {
 					b.writeVarInt(p.phase); b.writeVarInt(p.countdown); b.writeVarInt(p.alive); b.writeVarInt(p.total);
@@ -53,7 +53,7 @@ public final class Net {
 
 	/** S2C この受け手から見えない（茂みに隠れた）実体のID一覧。core が 4tick ごとに送る。空配列=全員見える。 */
 	public record HiddenPayload(int[] entityIds) implements CustomPacketPayload {
-		public static final Type<HiddenPayload> TYPE = type("hidden");
+		public static final Type<HiddenPayload> TYPE = typeOf("hidden");
 		public static final StreamCodec<RegistryFriendlyByteBuf, HiddenPayload> CODEC = StreamCodec.of(
 				(b, p) -> b.writeVarIntArray(p.entityIds), b -> new HiddenPayload(b.readVarIntArray()));
 		@Override public Type<HiddenPayload> type() { return TYPE; }
@@ -64,7 +64,7 @@ public final class Net {
 	 * team: 0=自分 1=敵 （ソロなので味方なし）。
 	 */
 	public record BarsPayload(int[] ids, int[] hp, int[] maxHp, int[] team, int[] cubes) implements CustomPacketPayload {
-		public static final Type<BarsPayload> TYPE = type("bars");
+		public static final Type<BarsPayload> TYPE = typeOf("bars");
 		public static final StreamCodec<RegistryFriendlyByteBuf, BarsPayload> CODEC = StreamCodec.of(
 				(b, p) -> {
 					b.writeVarIntArray(p.ids); b.writeVarIntArray(p.hp); b.writeVarIntArray(p.maxHp);
@@ -77,7 +77,7 @@ public final class Net {
 
 	/** C2S 通常攻撃（左クリック or 右クリック）。yaw は度。brawler が受けて Brawlers.attack を呼ぶ。 */
 	public record AttackPayload(float yaw) implements CustomPacketPayload {
-		public static final Type<AttackPayload> TYPE = type("attack");
+		public static final Type<AttackPayload> TYPE = typeOf("attack");
 		public static final StreamCodec<RegistryFriendlyByteBuf, AttackPayload> CODEC = StreamCodec.of(
 				(b, p) -> b.writeFloat(p.yaw), b -> new AttackPayload(b.readFloat()));
 		@Override public Type<AttackPayload> type() { return TYPE; }
@@ -85,7 +85,7 @@ public final class Net {
 
 	/** C2S 必殺技（キー既定 R）。yaw は度。brawler が受けて Brawlers.useSuper を呼ぶ。 */
 	public record SuperPayload(float yaw) implements CustomPacketPayload {
-		public static final Type<SuperPayload> TYPE = type("super");
+		public static final Type<SuperPayload> TYPE = typeOf("super");
 		public static final StreamCodec<RegistryFriendlyByteBuf, SuperPayload> CODEC = StreamCodec.of(
 				(b, p) -> b.writeFloat(p.yaw), b -> new SuperPayload(b.readFloat()));
 		@Override public Type<SuperPayload> type() { return TYPE; }

@@ -1,6 +1,7 @@
 package com.amaguri.brawl.mode;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
@@ -10,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 final class Msg {
 	private Msg() {}
 
-	static Component t(String key, String fallback, Object... args) {
+	static MutableComponent t(String key, String fallback, Object... args) {
 		return Component.translatableWithFallback(key, fallback, args);
 	}
 
