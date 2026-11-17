@@ -97,7 +97,7 @@ public final class Brawlers {
   public static Item weaponItem(String brawlerId); // ボットの手にも持たせる
 }
 ```
-- 初期キャラ（id / 名前）: `shelly` シェリー, `colt` コルト, `bull` ブル, `brock` ブロック, `elprimo` エルプリモ
+- 初期キャラ（id / 名前）: `rusty` ラスティ, `kaden` ケイデン, `gouen` ブル, `mimosa` ブロック, `takomaru` タコまる
 - 武器アイテムは見た目だけ（使用・攻撃・設置などの効果を持たない。投げ捨て不可は W4）
 - 弾数・ゲージ・HP の数値はこのファイルだけに置く（他担当は get() を通す）
 

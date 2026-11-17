@@ -12,71 +12,71 @@ final class BrawlerStats {
 	static final int MAX_AMMO = 3;
 	static final int ATTACK_COOLDOWN_TICKS = 8;
 
-	// ---- シェリー ----
-	static final int SHELLY_HP = 3600;
-	static final double SHELLY_SPEED = 2.4;
-	static final double SHELLY_RELOAD = 1.5;
-	static final float SHELLY_SUPER_PER_HIT = 0.067f;
-	static final int SHELLY_PELLETS = 5, SHELLY_DMG = 300;
-	static final double SHELLY_RANGE = 7.67, SHELLY_FAN = 30, SHELLY_SPEED_BPT = 1.0, SHELLY_PELLET_RADIUS = 0.35;
-	static final int SHELLY_SUPER_PELLETS = 9, SHELLY_SUPER_DMG = 320;
-	static final double SHELLY_SUPER_RANGE = 7.67, SHELLY_SUPER_FAN = 40, SHELLY_SUPER_KNOCK_TILES = 3;
+	// ---- ラスティ ----
+	static final int RUSTY_HP = 3600;
+	static final double RUSTY_SPEED = 2.4;
+	static final double RUSTY_RELOAD = 1.5;
+	static final float RUSTY_SUPER_PER_HIT = 0.067f;
+	static final int RUSTY_PELLETS = 5, RUSTY_DMG = 300;
+	static final double RUSTY_RANGE = 7.67, RUSTY_FAN = 30, RUSTY_SPEED_BPT = 1.0, RUSTY_PELLET_RADIUS = 0.35;
+	static final int RUSTY_SUPER_PELLETS = 9, RUSTY_SUPER_DMG = 320;
+	static final double RUSTY_SUPER_RANGE = 7.67, RUSTY_SUPER_FAN = 40, RUSTY_SUPER_KNOCK_TILES = 3;
 
-	// ---- コルト ----
-	static final int COLT_HP = 2800;
-	static final double COLT_SPEED = 2.4;
-	static final double COLT_RELOAD = 1.6;
-	static final float COLT_SUPER_PER_HIT = 0.042f;
-	static final int COLT_BULLETS = 6, COLT_DMG = 360, COLT_BULLET_INTERVAL_TICKS = 2;
-	static final double COLT_RANGE = 9.33, COLT_SPEED_BPT = 1.2, COLT_SCATTER_DEG = 2, COLT_BULLET_RADIUS = 0.3;
-	static final int COLT_SUPER_BULLETS = 12, COLT_SUPER_DMG = 360;
-	static final double COLT_SUPER_RANGE = 12.67;
+	// ---- ケイデン ----
+	static final int KADEN_HP = 2800;
+	static final double KADEN_SPEED = 2.4;
+	static final double KADEN_RELOAD = 1.6;
+	static final float KADEN_SUPER_PER_HIT = 0.042f;
+	static final int KADEN_BULLETS = 6, KADEN_DMG = 360, KADEN_BULLET_INTERVAL_TICKS = 2;
+	static final double KADEN_RANGE = 9.33, KADEN_SPEED_BPT = 1.2, KADEN_SCATTER_DEG = 2, KADEN_BULLET_RADIUS = 0.3;
+	static final int KADEN_SUPER_BULLETS = 12, KADEN_SUPER_DMG = 360;
+	static final double KADEN_SUPER_RANGE = 12.67;
 
-	// ---- ブル ----
-	static final int BULL_HP = 5000;
-	static final double BULL_SPEED = 2.57;
-	static final double BULL_RELOAD = 1.6;
-	static final float BULL_SUPER_PER_HIT = 0.0625f;
-	static final int BULL_PELLETS = 5, BULL_DMG = 400;
-	static final double BULL_RANGE = 5.33, BULL_FAN = 25, BULL_SPEED_BPT = 1.0, BULL_PELLET_RADIUS = 0.4;
-	static final double BULL_SUPER_DASH_TILES = 10;
-	static final int BULL_SUPER_DASH_TICKS = 12;           // 約0.6秒
-	static final int BULL_SUPER_DMG = 800;
-	static final double BULL_SUPER_KNOCK_TILES = 1.5;      // 押し出し（数値指定なしのため仮）
-	static final double BULL_SUPER_HIT_RADIUS_BLOCKS = 1.4;
+	// ---- ゴウエン ----
+	static final int GOUEN_HP = 5000;
+	static final double GOUEN_SPEED = 2.57;
+	static final double GOUEN_RELOAD = 1.6;
+	static final float GOUEN_SUPER_PER_HIT = 0.0625f;
+	static final int GOUEN_PELLETS = 5, GOUEN_DMG = 400;
+	static final double GOUEN_RANGE = 5.33, GOUEN_FAN = 25, GOUEN_SPEED_BPT = 1.0, GOUEN_PELLET_RADIUS = 0.4;
+	static final double GOUEN_SUPER_DASH_TILES = 10;
+	static final int GOUEN_SUPER_DASH_TICKS = 12;           // 約0.6秒
+	static final int GOUEN_SUPER_DMG = 800;
+	static final double GOUEN_SUPER_KNOCK_TILES = 1.5;      // 押し出し（数値指定なしのため仮）
+	static final double GOUEN_SUPER_HIT_RADIUS_BLOCKS = 1.4;
 
-	// ---- ブロック ----
-	static final int BROCK_HP = 2400;
-	static final double BROCK_SPEED = 2.4;
-	static final double BROCK_RELOAD = 2.1;
-	static final float BROCK_SUPER_PER_HIT = 0.25f;
-	static final int BROCK_DMG = 1040;
-	static final double BROCK_RANGE = 9.67, BROCK_SPEED_BPT = 0.8, BROCK_ROCKET_RADIUS = 0.4, BROCK_BLAST_TILES = 1;
-	static final int BROCK_SUPER_ROCKETS = 9, BROCK_SUPER_DMG = 1040, BROCK_SUPER_INTERVAL_TICKS = 3, BROCK_SUPER_FALL_TICKS = 8;
-	static final double BROCK_SUPER_CENTER_TILES = 7.67, BROCK_SUPER_AREA_TILES = 3;
+	// ---- ミモザ ----
+	static final int MIMOSA_HP = 2400;
+	static final double MIMOSA_SPEED = 2.4;
+	static final double MIMOSA_RELOAD = 2.1;
+	static final float MIMOSA_SUPER_PER_HIT = 0.25f;
+	static final int MIMOSA_DMG = 1040;
+	static final double MIMOSA_RANGE = 9.67, MIMOSA_SPEED_BPT = 0.8, MIMOSA_ROCKET_RADIUS = 0.4, MIMOSA_BLAST_TILES = 1;
+	static final int MIMOSA_SUPER_ROCKETS = 9, MIMOSA_SUPER_DMG = 1040, MIMOSA_SUPER_INTERVAL_TICKS = 3, MIMOSA_SUPER_FALL_TICKS = 8;
+	static final double MIMOSA_SUPER_CENTER_TILES = 7.67, MIMOSA_SUPER_AREA_TILES = 3;
 
-	// ---- エルプリモ ----
-	static final int ELPRIMO_HP = 6000;
-	static final double ELPRIMO_SPEED = 2.57;
-	static final double ELPRIMO_RELOAD = 1.1;
-	static final float ELPRIMO_SUPER_PER_HIT = 0.0625f;
-	static final int ELPRIMO_PUNCHES = 4, ELPRIMO_DMG = 380;
-	static final double ELPRIMO_RANGE = 3, ELPRIMO_SPEED_BPT = 0.9, ELPRIMO_FAN = 40, ELPRIMO_PUNCH_RADIUS = 0.6;
-	static final double ELPRIMO_SUPER_JUMP_TILES = 6, ELPRIMO_SUPER_RADIUS_TILES = 1.5, ELPRIMO_SUPER_KNOCK_TILES = 1.5;
-	static final int ELPRIMO_SUPER_DMG = 800, ELPRIMO_SUPER_FLIGHT_TICKS = 16;
-	static final double ELPRIMO_SUPER_JUMP_HEIGHT_BLOCKS = 3.5;
+	// ---- タコまる ----
+	static final int TAKOMARU_HP = 6000;
+	static final double TAKOMARU_SPEED = 2.57;
+	static final double TAKOMARU_RELOAD = 1.1;
+	static final float TAKOMARU_SUPER_PER_HIT = 0.0625f;
+	static final int TAKOMARU_PUNCHES = 4, TAKOMARU_DMG = 380;
+	static final double TAKOMARU_RANGE = 3, TAKOMARU_SPEED_BPT = 0.9, TAKOMARU_FAN = 40, TAKOMARU_PUNCH_RADIUS = 0.6;
+	static final double TAKOMARU_SUPER_JUMP_TILES = 6, TAKOMARU_SUPER_RADIUS_TILES = 1.5, TAKOMARU_SUPER_KNOCK_TILES = 1.5;
+	static final int TAKOMARU_SUPER_DMG = 800, TAKOMARU_SUPER_FLIGHT_TICKS = 16;
+	static final double TAKOMARU_SUPER_JUMP_HEIGHT_BLOCKS = 3.5;
 
 	static List<BrawlerDef> defs() {
 		return List.of(
-				new BrawlerDef("shelly", "シェリー", SHELLY_HP, SHELLY_SPEED, MAX_AMMO, SHELLY_RELOAD, ATTACK_COOLDOWN_TICKS,
-						SHELLY_RANGE, SHELLY_SUPER_RANGE, SHELLY_SUPER_PER_HIT, "ショットガン使い"),
-				new BrawlerDef("colt", "コルト", COLT_HP, COLT_SPEED, MAX_AMMO, COLT_RELOAD, ATTACK_COOLDOWN_TICKS,
-						COLT_RANGE, COLT_SUPER_RANGE, COLT_SUPER_PER_HIT, "ガンマン"),
-				new BrawlerDef("bull", "ブル", BULL_HP, BULL_SPEED, MAX_AMMO, BULL_RELOAD, ATTACK_COOLDOWN_TICKS,
-						BULL_RANGE, BULL_SUPER_DASH_TILES, BULL_SUPER_PER_HIT, "タンク"),
-				new BrawlerDef("brock", "ブロック", BROCK_HP, BROCK_SPEED, MAX_AMMO, BROCK_RELOAD, ATTACK_COOLDOWN_TICKS,
-						BROCK_RANGE, BROCK_SUPER_CENTER_TILES, BROCK_SUPER_PER_HIT, "ロケット砲手"),
-				new BrawlerDef("elprimo", "エルプリモ", ELPRIMO_HP, ELPRIMO_SPEED, MAX_AMMO, ELPRIMO_RELOAD, ATTACK_COOLDOWN_TICKS,
-						ELPRIMO_RANGE, ELPRIMO_SUPER_JUMP_TILES, ELPRIMO_SUPER_PER_HIT, "格闘家"));
+				new BrawlerDef("rusty", "ラスティ", RUSTY_HP, RUSTY_SPEED, MAX_AMMO, RUSTY_RELOAD, ATTACK_COOLDOWN_TICKS,
+						RUSTY_RANGE, RUSTY_SUPER_RANGE, RUSTY_SUPER_PER_HIT, "ショットガン使い"),
+				new BrawlerDef("kaden", "ケイデン", KADEN_HP, KADEN_SPEED, MAX_AMMO, KADEN_RELOAD, ATTACK_COOLDOWN_TICKS,
+						KADEN_RANGE, KADEN_SUPER_RANGE, KADEN_SUPER_PER_HIT, "ガンマン"),
+				new BrawlerDef("gouen", "ゴウエン", GOUEN_HP, GOUEN_SPEED, MAX_AMMO, GOUEN_RELOAD, ATTACK_COOLDOWN_TICKS,
+						GOUEN_RANGE, GOUEN_SUPER_DASH_TILES, GOUEN_SUPER_PER_HIT, "タンク"),
+				new BrawlerDef("mimosa", "ミモザ", MIMOSA_HP, MIMOSA_SPEED, MAX_AMMO, MIMOSA_RELOAD, ATTACK_COOLDOWN_TICKS,
+						MIMOSA_RANGE, MIMOSA_SUPER_CENTER_TILES, MIMOSA_SUPER_PER_HIT, "花火砲手"),
+				new BrawlerDef("takomaru", "タコまる", TAKOMARU_HP, TAKOMARU_SPEED, MAX_AMMO, TAKOMARU_RELOAD, ATTACK_COOLDOWN_TICKS,
+						TAKOMARU_RANGE, TAKOMARU_SUPER_JUMP_TILES, TAKOMARU_SUPER_PER_HIT, "格闘家"));
 	}
 }

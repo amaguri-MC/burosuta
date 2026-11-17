@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "brawl:item/colt_weapon"
+    "layer0": "brawl:item/gouen_weapon"
   }
 }

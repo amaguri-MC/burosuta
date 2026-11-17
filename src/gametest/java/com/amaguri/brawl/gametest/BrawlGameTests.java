@@ -85,16 +85,16 @@ public class BrawlGameTests {
 		}
 	}
 
-	// ---- 1. シェリーの通常攻撃が正面6ブロックのボットに当たる ----
+	// ---- 1. ラスティの通常攻撃が正面6ブロックのボットに当たる ----
 
 	@GameTest(maxTicks = 100)
 	public void shellyAttackDamagesBotInFront(GameTestHelper h) {
 		final int f = FLOOR_HIT;
 		buildStage(h, f);
-		BrawlBot shooter = bot(h, f, 8.5, 3.5, "shelly", "Shooter");
-		BrawlBot target = bot(h, f, 8.5, 9.5, "colt", "Target");
+		BrawlBot shooter = bot(h, f, 8.5, 3.5, "rusty", "Shooter");
+		BrawlBot target = bot(h, f, 8.5, 9.5, "kaden", "Target");
 		final int before = Combat.state(target).hp;
-		h.assertTrue(Brawlers.attack(shooter, 0f), "シェリーの通常攻撃が撃てない（弾3発のはず）");
+		h.assertTrue(Brawlers.attack(shooter, 0f), "ラスティの通常攻撃が撃てない（弾3発のはず）");
 		h.runAfterDelay(40, () -> {
 			BrawlState st = Combat.state(target);
 			int lost = before - st.hp;
@@ -110,8 +110,8 @@ public class BrawlGameTests {
 	public void ammoRunsOutAfterThreeShotsAndReloads(GameTestHelper h) {
 		final int f = FLOOR_AMMO;
 		buildStage(h, f);
-		BrawlBot shooter = bot(h, f, 8.5, 3.5, "shelly", "Ammo");
-		BrawlerDef def = Brawlers.get("shelly");
+		BrawlBot shooter = bot(h, f, 8.5, 3.5, "rusty", "Ammo");
+		BrawlerDef def = Brawlers.get("rusty");
 		final int gap = def.attackCooldownTicks() + 1;
 		final int reloadTicks = (int) Math.ceil(def.reloadSec() * 20) + 10;
 		var st = new Object() {
@@ -185,7 +185,7 @@ public class BrawlGameTests {
 		}
 		final BlockPos wallRel = new BlockPos(x0, f + 1, z0);
 		h.assertTrue(h.getBlockState(wallRel).is(ArenaBlocks.WALL), "前提: 壁が置かれている");
-		BrawlBot shooter = bot(h, f, x0 + 0.5, 3.5, "shelly", "Super");
+		BrawlBot shooter = bot(h, f, x0 + 0.5, 3.5, "rusty", "Super");
 		Combat.state(shooter).superCharge = 1.0f;
 		h.assertTrue(Brawlers.useSuper(shooter, 0f), "ゲージ満タンなのに useSuper が false");
 		h.onEachTick(() -> {
@@ -223,8 +223,8 @@ public class BrawlGameTests {
 		}
 		final BlockPos boxRel = new BlockPos(x0, f + 1, z0);
 		h.assertTrue(h.getBlockState(boxRel).is(ArenaBlocks.BOX), "前提: 箱が置かれている");
-		BrawlBot picker = bot(h, f, 3.5, 4.5, "shelly", "Picker");
-		final int baseMax = Brawlers.get("shelly").maxHp();
+		BrawlBot picker = bot(h, f, 3.5, 4.5, "rusty", "Picker");
+		final int baseMax = Brawlers.get("rusty").maxHp();
 		var st = new Object() {
 			boolean damaged;
 			boolean moved;
@@ -285,8 +285,8 @@ public class BrawlGameTests {
 				}
 			}
 		}
-		BrawlBot hider = bot(h, f, 9.0, 12.0, "colt", "Hider");
-		BrawlBot viewer = bot(h, f, 9.0, 4.0, "shelly", "Viewer");
+		BrawlBot hider = bot(h, f, 9.0, 12.0, "kaden", "Hider");
+		BrawlBot viewer = bot(h, f, 9.0, 4.0, "rusty", "Viewer");
 		boolean inBush = Combat.inBush(hider);
 		boolean far = Combat.isHiddenFrom(hider, viewer);
 		moveTo(h, viewer, f, 9.0, 9.0);
@@ -316,7 +316,7 @@ public class BrawlGameTests {
 	public void eliminationHookFiresExactlyOnce(GameTestHelper h) {
 		final int f = FLOOR_ELIM;
 		buildStage(h, f);
-		BrawlBot victim = bot(h, f, 8.5, 8.5, "colt", "Victim");
+		BrawlBot victim = bot(h, f, 8.5, 8.5, "kaden", "Victim");
 		var original = MatchHooks.onEliminated;
 		int[] count = { 0 };
 		LivingEntity[] seen = { null };

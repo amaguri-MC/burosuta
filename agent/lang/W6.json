@@ -1,14 +1,14 @@
 {
   "key.brawl.super": "必殺技",
   "key.category.brawl.main": "ブロスタ風バトル",
-  "brawl.hud.skill.shelly.normal": "バックショット",
-  "brawl.hud.skill.shelly.super": "スーパーシェル",
-  "brawl.hud.skill.colt.normal": "6連発",
-  "brawl.hud.skill.colt.super": "弾丸の雨",
-  "brawl.hud.skill.bull.normal": "ダブルバレル",
-  "brawl.hud.skill.bull.super": "ブルドーザー",
-  "brawl.hud.skill.brock.normal": "ロケット",
-  "brawl.hud.skill.brock.super": "ロケットの雨",
-  "brawl.hud.skill.elprimo.normal": "エルプリモパンチ",
-  "brawl.hud.skill.elprimo.super": "フライングエルボー"
+  "brawl.hud.skill.rusty.normal": "スクラップ散弾",
+  "brawl.hud.skill.rusty.super": "鉱山ダイナマイト弾",
+  "brawl.hud.skill.kaden.normal": "ツインレイ",
+  "brawl.hud.skill.kaden.super": "レイストーム",
+  "brawl.hud.skill.gouen.normal": "岩石つぶて",
+  "brawl.hud.skill.gouen.super": "ゴーレムタックル",
+  "brawl.hud.skill.mimosa.normal": "打ち上げ花火",
+  "brawl.hud.skill.mimosa.super": "大輪スターマイン",
+  "brawl.hud.skill.takomaru.normal": "張り手連打",
+  "brawl.hud.skill.takomaru.super": "ボディプレス"
 }

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "brawl:item/bull_weapon"
+    "layer0": "brawl:item/rusty_weapon"
   }
 }

@@ -96,11 +96,11 @@ public final class HudClient {
 	}
 
 	private static final java.util.Map<String, String[]> SKILLS = java.util.Map.of(
-			"shelly", new String[] { "バックショット", "スーパーシェル" },
-			"colt", new String[] { "6連発", "弾丸の雨" },
-			"bull", new String[] { "ダブルバレル", "ブルドーザー" },
-			"brock", new String[] { "ロケット", "ロケットの雨" },
-			"elprimo", new String[] { "エルプリモパンチ", "フライングエルボー" });
+			"rusty", new String[] { "スクラップ散弾", "鉱山ダイナマイト弾" },
+			"kaden", new String[] { "ツインレイ", "レイストーム" },
+			"gouen", new String[] { "岩石つぶて", "ゴーレムタックル" },
+			"mimosa", new String[] { "打ち上げ花火", "大輪スターマイン" },
+			"takomaru", new String[] { "張り手連打", "ボディプレス" });
 
 	private static void skill(boolean sup) {
 		Net.HudPayload h = HudState.hud;
