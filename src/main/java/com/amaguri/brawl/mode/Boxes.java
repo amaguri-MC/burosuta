@@ -83,6 +83,7 @@ public final class Boxes {
 			return;
 		}
 		HP.remove(key);
+		org.slf4j.LoggerFactory.getLogger("brawl").info("[box] broken at {}", b);
 		for (int dx = 0; dx < 2; dx++) {
 			for (int dy = 0; dy < 2; dy++) {
 				for (int dz = 0; dz < 2; dz++) {

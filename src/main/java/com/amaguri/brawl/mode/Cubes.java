@@ -31,7 +31,8 @@ final class Cubes {
 			double a = r.nextDouble() * Math.PI * 2;
 			double s = count == 1 ? 0.0 : 0.12 + r.nextDouble() * 0.12;
 			ie.setDeltaMovement(Math.cos(a) * s, 0.25 + r.nextDouble() * 0.1, Math.sin(a) * s);
-			lvl.addFreshEntity(ie);
+			boolean ok = lvl.addFreshEntity(ie);
+			org.slf4j.LoggerFactory.getLogger("brawl").info("[cube] drop at {} ok={} removed={}", pos, ok, ie.isRemoved());
 		}
 	}
 
