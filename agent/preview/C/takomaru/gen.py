@@ -118,6 +118,141 @@ bone("tentacle_r", "body", (2, 13, 3), (0, 0, 0))
 bone("tentacle_l", "body", (-2, 13, 3), (0, 0, 0))
 
 # ---------- 頭 (16x14x12)
+def ring(f, cx, cy):
+    for dx, dy in ((0,-1),(1,-1),(-1,0),(2,0),(-1,1),(2,1),(0,2),(1,2)): f.px(cx+dx, cy+dy, S_L)
+    f.px(cx, cy, S_M); f.px(cx+1, cy, S_M); f.px(cx, cy+1, S_M); f.px(cx+1, cy+1, S_D)
+def head_p(F, w, h, d):
+    f = F['F']
+    for (x0, sgn) in ((1, 1), (14, -1)):
+        for dx in range(0, 4): f.px(x0+sgn*dx, 6, INK)
+        for dx in range(2, 6): f.px(x0+sgn*dx, 7, INK)
+        f.px(x0, 7, R_OL)
+    for ex, px_, hl in ((2, 3, 3), (10, 10, 11)):
+        f.rect(ex, 8, 4, 4, WHITE)
+        f.rect(ex, 11, 4, 1, H('e8d6cc'))
+        f.rect(px_, 9, 2, 3, INK)
+        f.px(hl, 9, WHITE)
+    for cx in (1, 13): f.rect(cx, 12, 2, 1, H('f4806e'))
+    f.rect(6, 13, 4, 1, INK)
+    f.px(5, 12, R_OL); f.px(10, 12, R_OL)
+    f.rect(2, 0, 4, 1, R_HI); f.px(1, 1, R_HI)
+    sucker(F['L'], 3, 8); sucker(F['R'], 8, 8)
+    ring(F['B'], 3, 1); ring(F['B'], 11, 2); sucker(F['B'], 7, 8)
+    ring(F['T'], 2, 3); ring(F['T'], 11, 6); ring(F['T'], 12, 2)
+    F['T'].rect(5, 1, 3, 1, R_HI); F['T'].px(4, 2, R_HI)
+add("head", (-8, 16, -6), (16, 14, 12), head_p)
+
+def d1(F, w, h, d):
+    ring(F['T'], 2, 2); ring(F['T'], 9, 5); F['T'].rect(5, 1, 3, 1, R_HI); F['F'].rect(2, 0, 3, 1, R_HI)
+add("head", (-7, 30, -5), (14, 1, 10), d1)
+def d2(F, w, h, d):
+    ring(F['T'], 7, 3); F['T'].rect(2, 1, 3, 1, R_HI); F['F'].rect(1, 0, 2, 1, R_HI)
+add("head", (-6, 31, -4), (12, 1, 8), d2)
+def d3(F, w, h, d):
+    F['T'].rect(0, 0, w, d, R_L); F['T'].rect(1, 1, 2, 1, WHITE); F['T'].px(4, 2, R_HI)
+    F['F'].px(1, 0, R_HI)
+add("head", (-4, 32, -2), (8, 1, 4), d3)
+
+# 鉢巻 藍
+B_L=H('5c78c8'); B_M=H('3f56a6'); B_D=H('2c3a7c'); B_OL=H('1e2756')
+INK=H('3a1224'); WHITE=H('fffaf0'); GOLD=H('f2c14e')
+
+cubes = []  # (bone, name, from, size, painter)
+cur = [0, 0, 0]  # shelf packer
+def alloc(w, h):
+    tw, th = 2*h + 0, 0
+    raise
+
+shelf = {"x":0,"y":0,"rowh":0}
+def pack(w, h, d):
+    W_, H_ = 2*d+2*w, d+h
+    if shelf["x"] + W_ > S:
+        shelf["x"] = 0; shelf["y"] += shelf["rowh"]; shelf["rowh"] = 0
+    u, v = shelf["x"], shelf["y"]
+    shelf["x"] += W_; shelf["rowh"] = max(shelf["rowh"], H_)
+    assert shelf["y"] + H_ <= S, "texture overflow"
+    return u, v
+
+bones = {}
+def bone(name, parent, pivot, rot=(0,0,0)):
+    bones[name] = {"name": name, "parent": parent, "pivot": list(pivot), "rotation": list(rot), "cubes": []}
+
+class Face:
+    def __init__(s, x0, y0, w, h): s.x0, s.y0, s.w, s.h = x0, y0, w, h
+    def px(s, x, y, c):
+        if 0 <= x < s.w and 0 <= y < s.h: P[s.x0+x, s.y0+y] = c
+    def get(s, x, y): return P[s.x0+x, s.y0+y]
+    def rect(s, x, y, w, h, c):
+        for j in range(h):
+            for i in range(w): s.px(x+i, y+j, c)
+
+def add(bn, frm, size, painter=None, pal='red', inflate=0):
+    w, h, d = size
+    u, v = pack(w, h, d)
+    bones[bn]["cubes"].append({"from": list(frm), "size": list(size), "uv": [u, v], "inflate": inflate})
+    faces = {
+        'R': Face(u, v+d, d, h), 'F': Face(u+d, v+d, w, h), 'L': Face(u+d+w, v+d, d, h), 'B': Face(u+2*d+w, v+d, w, h),
+        'T': Face(u+d, v, w, d), 'D': Face(u+d+w, v, w, d)}
+    base(faces, pal)
+    if painter: painter(faces, w, h, d)
+    return faces
+
+PALS = {
+ 'red': (R_L, R_M, R_D, R_OL, R_HI),
+ 'white': (W_L, W_M, W_D, W_OL, W_L),
+ 'blue': (B_L, B_M, B_D, B_OL, B_L),
+}
+def base(faces, pal):
+    L, M, D, OL, HI = PALS[pal]
+    for k, f in faces.items():
+        for y in range(f.h):
+            t = y / max(1, f.h-1)
+            if k == 'T': c = L
+            elif k == 'D': c = D
+            else:
+                if f.h <= 3: c = M
+                elif t < 0.34: c = L
+                elif t < 0.72: c = M
+                else: c = D
+                # ディザ境界
+                if f.h > 3:
+                    for edge, lo, hi in ((0.34, L, M), (0.72, M, D)):
+                        if abs(t-edge) < 0.5/f.h+0.04: pass
+            for x in range(f.w):
+                cc = c
+                if k not in 'TD' and f.h > 5:
+                    # 境界ディザ
+                    if abs(t-0.34) < 0.12 and (x+y) % 2 == 0: cc = M if c == L else L
+                    if abs(t-0.72) < 0.12 and (x+y) % 2 == 0: cc = D if c == M else M
+                f.px(x, y, cc)
+        # 縁取り(隣色を暗く)
+        for y in range(f.h):
+            for x in range(f.w):
+                if x == f.w-1 or y == f.h-1 or (k in 'RL' and x == 0):
+                    if k in 'TD': continue
+                    f.px(x, y, OL if y == f.h-1 else D)
+        # 点描の揺らぎ
+        if pal == 'red' and f.w*f.h > 20:
+            for _ in range(f.w*f.h//40):
+                x, y = rnd.randrange(f.w), rnd.randrange(f.h)
+                f.px(x, y, HI if k == 'T' or y < f.h*0.5 else R_D)
+
+def sucker(f, cx, cy, big=False):
+    f.px(cx, cy, S_L); f.px(cx+1, cy, S_L); f.px(cx, cy+1, S_M); f.px(cx+1, cy+1, S_D if big else S_M)
+    if big: f.px(cx-1, cy, S_M); f.px(cx+2, cy+1, S_D) if False else None
+
+# ------------------------------------------------------------ ボーン
+bone("body", None, (0, 8, 0))
+bone("head", None, (0, 16, 0))
+bone("right_arm", None, (8, 15, 0))
+bone("left_arm", None, (-8, 15, 0))
+bone("right_leg", None, (3, 6, 0))
+bone("left_leg", None, (-3, 6, 0))
+bone("weapon", "right_arm", (9, 6, -1))
+bone("tentacle_r", "body", (2, 13, 3), (0, 0, 0))
+bone("tentacle_l", "body", (-2, 13, 3), (0, 0, 0))
+
+# ---------- 頭 (16x14x12)
 def head_p(F, w, h, d):
     f = F['F']
     for (x0, sgn) in ((1, 1), (14, -1)):
@@ -435,8 +570,8 @@ def band_p(F, w, h, d):
             f.px(x, f.h-1, B_OL if x % 2 == 0 else B_D)
             if f.h > 1: f.px(x, 0, B_L)
     for k in 'TD':
-        F[k].rect(0, 0, F[k].w, F[k].h, B_M)
-add("head", (-8, 27, -6), (16, 2, 12), band_p, inflate=0.5)
+        F[k].rect(0, 0, F[k].w, F[k].h, (0,0,0,0))
+add("head", (-8, 25, -6), (16, 3, 12), band_p, inflate=0.5)
 
 # 結び目と垂れ
 def knot_p(F, w, h, d):
@@ -444,15 +579,15 @@ def knot_p(F, w, h, d):
         f.rect(0, 0, f.w, f.h, B_M)
         f.rect(0, 0, f.w, 1, B_L); f.rect(0, f.h-1, f.w, 1, B_D)
         f.px(0, f.h//2, B_D)
-add("head", (8, 26, -1), (3, 3, 3), knot_p)
+add("head", (8, 25, 2), (3, 3, 3), knot_p)
 def tail_p(F, w, h, d):
     for k, f in F.items():
         for y in range(f.h):
             for x in range(f.w):
                 f.px(x, y, B_M if (x+y) % 3 else B_L)
         f.rect(0, f.h-1, f.w, 1, B_OL)
-add("head", (9, 21, 0), (2, 5, 2), tail_p)
-add("head", (9, 22, -3), (2, 4, 2), tail_p)
+add("head", (9, 20, 3), (2, 5, 2), tail_p)
+add("head", (9, 21, 5), (2, 4, 2), tail_p)
 
 # ---------- 胴 (10x10x6)
 def body_p(F, w, h, d):

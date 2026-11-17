@@ -30,7 +30,15 @@ bones = [
         cube((6.5, 7.2, -1), (4, 4, 12), (32, 48)),      # 筒
         cube((5.5, 6.2, -3), (6, 6, 2), (0, 56)),       # 先端の広がり
     ], (-70, 0, 0)),
-    bone("bun", "head", (0, 24, 2), [cube((-2.5, 24, 0), (5, 5, 5), (44, 0))]),
+    bone("bun", "head", (0, 24, 3), [
+        cube((-2, 24, 1), (4, 1, 4), (44, 0)),
+        cube((-2.5, 25, 0.5), (5, 2, 5), (44, 5)),
+        cube((-1.5, 27, 1.5), (3, 1, 3), (44, 41)),
+    ]),
+    bone("kanzashi", "head", (1, 26.5, 3), [
+        cube((1, 26, 2.5), (5, 1, 1), (48, 22)),
+        cube((6, 25.5, 2), (2, 2, 2), (48, 25)),
+    ], (0, 0, 14)),
     bone("mimosa_a", "head", (3, 24, 2), [cube((2.5, 24, 1), (2, 2, 2), (56, 34))]),
     bone("mimosa_b", "head", (-3, 24, 2), [cube((-4.5, 24, 2), (2, 2, 2), (56, 34))]),
     bone("shell_a", "body", (-2.5, 9.5, 4.5), [cube((-5, 7, 2), (5, 5, 5), (0, 46))]),
@@ -120,6 +128,9 @@ put(F, 0, 2, HAIR[2]); put(F, 11, 2, HAIR[2])
 for x in (1, 3, 8, 10): put(F, x, 2, SK[0])
 put(F, 5, 2, HAIR[2]); put(F, 6, 2, HAIR[2])
 for x in (5, 6): put(F, x, 3, HAIR[2]) if False else None
+for (x, y) in ((4, 3), (7, 3), (6, 3)): put(F, x, y, HAIR[1])
+for x in (2, 9): put(F, x, 0, HAIR[2])
+put(F, 4, 1, HAIR[2]); put(F, 7, 1, HAIR[2]); put(F, 0, 3, HAIR[3]); put(F, 11, 4, HAIR[3])
 # 眉(右が高い=いたずら)
 hline(F, 3, 1, 3, HAIR[3]); hline(F, 3, 7, 9, HAIR[3]); put(F, 10, 2, HAIR[3]); put(F, 4, 3, SK[1])
 # 丸めがね(金のつる): 外枠5x4 を左右に
@@ -180,16 +191,28 @@ hline(B, 10, 0, 11, HAIR[3])
 for x in (4, 5, 6, 7): put(B, x, 9, SK[2])   # うなじ
 
 # ---- bun (44,0) 4x4x4 : 白髪のお団子
-RB = rects(44, 0, 5, 5, 5)
-for k, r in RB.items():
-    banded(r, HAIR, k, (0.4, 0.75))
+# お団子: 3段の丸い形 + 毛束の線 + かんざし
+R1 = rects(44, 0, 4, 1, 4)
+for k, r in R1.items(): banded(r, NAV, k, (0.5, 0.8))     # 髪紐
+R2 = rects(44, 5, 5, 2, 5)
+for k, r in R2.items():
+    banded(r, HAIR, k, (0.5, 0.85))
     if k in ("front", "back", "left", "right"):
-        put(r, 1, 1, (255, 255, 255)); put(r, 2, 2, HAIR[2])
-for k in ("front", "back", "left", "right"):
-    r = RB[k]
-    hline(r, 4, 0, W(r) - 1, GOLD[2]); hline(r, 3, 0, W(r) - 1, GOLD[1])
-    put(r, 1, 3, GOLD[0]); put(r, 3, 0, HAIR[0]); put(r, 2, 1, HAIR[1])
-put(RB["top"], 1, 1, (255, 255, 255)); put(RB["top"], 2, 1, (255, 255, 255)); put(RB["top"], 3, 3, HAIR[1])
+        put(r, 1, 0, HAIR[2]); put(r, 3, 0, HAIR[2]); put(r, 2, 1, HAIR[2]); put(r, 0, 1, HAIR[2]); put(r, 4, 1, HAIR[3])
+    if k == "top":
+        for (x, y) in ((1, 1), (2, 3), (3, 2), (0, 3), (4, 1)): put(r, x, y, HAIR[2])
+R3 = rects(44, 41, 3, 1, 3)
+for k, r in R3.items():
+    banded(r, HAIR, k, (0.5, 0.85))
+fillr(R3["top"], (255, 255, 255)); put(R3["top"], 1, 1, HAIR[1]); put(R3["top"], 2, 0, HAIR[1])
+# かんざし
+RK = rects(48, 22, 5, 1, 1)
+for k, r in RK.items(): fillr(r, GOLD[1] if k != "bottom" else GOLD[2])
+put(RK["front"], 0, 0, GOLD[0]); put(RK["top"], 0, 0, GOLD[0])
+RKb = rects(48, 25, 2, 2, 2)
+for k, r in RKb.items(): fillr(r, RED[1] if k != "top" else RED[0]); 
+for k in ("front", "right"): put(RKb[k], 0, 0, (255, 190, 170)); put(RKb[k], 1, 1, RED[2])
+fillr(RKb["bottom"], RED[3])
 # ---- mimosa (44,8) 2x2x2 : ミモザの黄色い花
 RM = rects(56, 34, 2, 2, 2)
 for k, r in RM.items():

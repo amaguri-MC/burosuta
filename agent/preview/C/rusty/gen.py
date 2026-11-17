@@ -86,27 +86,22 @@ def head(k,i,j,w,h):
         if i in(3,9): return H1
         return S1
     skin=S1 if j<8 else (S2 if j<10 else S3)
-    # brows
-    if j==3 and i in(2,3,4): return H3 if i<4 else H2
-    if j==3 and i in(8,9,10): return H3 if i>8 else H2
-    if j==2 and i in(4,8): return H3
-    for c0 in (2,8):
-        if c0<=i<=c0+2 and 5<=j<=8:
+    # brows: cheerful, inner ends raised
+    if (i,j) in((1,4),(2,4),(3,3),(4,3),(8,3),(9,3),(10,4),(11,4)): return H3 if (i,j) not in((1,4),(11,4)) else H2
+    for c0 in (1,8):
+        if c0<=i<=c0+3 and 5<=j<=8:
             ci=i-c0;rj=j-5
-            if rj==0: return B3
-            if c0==8: ci=2-ci        # mirror: white outside, iris toward centre
-            if rj==1: return (150,82,44) if ci==2 else (255,255,255)
-            if rj==2: return (255,255,255) if ci==0 else (46,26,30)
-            return (206,118,60) if ci else (150,84,52)
-    # eye shine already; blush & freckles
-    if j==9 and (i in(1,2,3) or i in(9,10,11)):
+            if rj==0: return B3 if ci in(1,2) else skin
+            if rj==1: return B3 if ci in(0,3) else ((255,255,255) if ci==1 else (150,82,44))
+            if rj==2: return (236,236,246) if ci in(0,3) else (46,26,30)
+            return (206,118,60) if ci in(1,2) else skin
+    if j==9 and (i in(0,1,2,3) or i in(9,10,11,12)):
         return (240,150,128) if i in(2,10) else ((196,110,84) if (i+j)%2 else S2)
-    if j==7 and i in(0,12): return (204,124,92)
-    if j==8 and i in(1,3,9,11): return (204,124,92)
-    if j==10 and i in (5,6,7):  # grin
-        return (255,250,240) if i==6 else (142,48,50)
-    if j==9 and i in (4,8): return (170,60,56)
-    if j==9 and i in (5,6,7): return (142,48,50) if i!=6 else (255,250,240)
+    if j==8 and i in(0,12): return (204,124,92)
+    if j==9 and i in (4,8): return (130,40,44)
+    if j==9 and i in (5,6,7): return (255,252,244) if i!=6 else (255,255,255)
+    if j==10 and i in (4,8): return S3
+    if j==10 and i in (5,6,7): return (230,110,110) if i==6 else (150,50,54)
     if j==8 and i==6: return S3   # nose
     if i==0 or i==12: return dk(skin,.9)
     return skin
