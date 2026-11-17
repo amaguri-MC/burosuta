@@ -1,0 +1,27 @@
+{
+	"schemaVersion": 1,
+	"id": "brawl",
+	"version": "${version}",
+	"name": "Burosuta",
+	"description": "ブロスタ風バトルロイヤルをマイクラで遊ぶMOD（身内用ファンメイド）",
+	"authors": ["amaguri"],
+	"license": "All-Rights-Reserved",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["com.amaguri.brawl.BrawlMod"],
+		"client": ["com.amaguri.brawl.client.BrawlClient"]
+	},
+	"mixins": [
+		"brawl.core.mixins.json",
+		"brawl.mode.mixins.json",
+		"brawl.bot.mixins.json",
+		{ "config": "brawl.hud.mixins.json", "environment": "client" },
+		{ "config": "brawl.botclient.mixins.json", "environment": "client" }
+	],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

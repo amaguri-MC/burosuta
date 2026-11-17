@@ -1,0 +1,11 @@
+# 共通ルール（全員）
+- リポジトリ: /home/claude/burosuta（MC 26.2 Fabric, Java 25）。まず /home/claude/burosuta/CONTRACT.md と api/*.java を読む
+- **ここではビルドできない**（ネットワーク無し）。API は必ず /home/claude/apidump/mc/common.txt, client.txt, /home/claude/apidump/fabric/fabric.txt を grep して実在（クラス名・引数・static か）を確認してから書く。26.2 は Identifier（ResourceLocation ではない）、EntityTypes など名前が変わっている。確認できなかった箇所は `// UNVERIFIED:` を付ける
+- 手本: /home/claude/ref-aibot（同じ 26.2 で動いている Mod）。登録・Renderer・gametest・コマンドの書き方はここを真似る
+- バニラの JSON（モデル・ブロックステート等）の実物は /home/claude/apidump/data/ にある
+- 自分の担当範囲（CONTRACT.md の表）以外のファイルは作らない・変えない。他担当の API は CONTRACT の署名どおりに呼ぶ（中身は無い前提でよい）
+- 契約に無い他担当の機能が必要なら自分の範囲で作るか、返答の「不確かな点」に書く
+- 画面に出る文字は日本語。言語キーは agent/lang/<担当名>.json に {"キー":"日本語"} で書く（assets の lang は触らない）
+- テクスチャ（16x16 PNG）は Python+PIL で描く。縁取りは黒一色にせず、隣の色を暗くした色相で。ブロスタの公式の絵・ロゴ・キャラの見た目は描かない（武器や箱など一般的な物はOK）
+- git は使わない（司令塔がまとめて commit する）
+- 返答は「完了 / 成果物 / 不確かな点」を3行以内

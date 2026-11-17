@@ -1,0 +1,10 @@
+{
+  "block.brawl.wall": "岩の壁",
+  "block.brawl.border": "外壁の岩",
+  "block.brawl.bush": "茂み",
+  "block.brawl.box": "パワーキューブの箱",
+  "block.brawl.rope": "ロープ柵",
+  "block.brawl.floor_a": "芝の床（明）",
+  "block.brawl.floor_b": "芝の床（暗）",
+  "item.brawl.power_cube": "パワーキューブ"
+}

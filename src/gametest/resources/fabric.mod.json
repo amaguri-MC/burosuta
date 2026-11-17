@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "brawl-gametest",
+	"version": "1.0.0",
+	"name": "Burosuta Game Tests",
+	"description": "サーバー gametest（runGameTest）。配布する jar には入らない。",
+	"license": "CC0-1.0",
+	"environment": "*",
+	"depends": {
+		"brawl": "*",
+		"fabric-api": "*"
+	},
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"com.amaguri.brawl.gametest.BrawlClientTest"
+		],
+		"fabric-gametest": [
+			"com.amaguri.brawl.gametest.BrawlGameTests"
+		]
+	}
+}

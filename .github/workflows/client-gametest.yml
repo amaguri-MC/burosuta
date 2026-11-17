@@ -1,0 +1,47 @@
+# 実機クライアント(xvfb)でブロスタの試合のスクリーンショットを撮り、gametest-out ブランチへ force push する。
+name: client-gametest
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  shots:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6
+      - name: setup jdk
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+      - name: install xvfb and software GL
+        # apt の障害に備え、既にあれば入れない
+        run: |
+          command -v xvfb-run >/dev/null 2>&1 || (sudo apt-get update -y; sudo apt-get install -y xvfb)
+          sudo apt-get install -y libgl1-mesa-dri libglx-mesa0 mesa-vulkan-drivers libxrandr2 libxxf86vm1 libxcursor1 libxi6 || true
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+      - name: run client gametest
+        id: gt
+        continue-on-error: true
+        run: |
+          for i in 1 2; do xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runClientGameTest 2>&1 | tee gametest.log && break; done
+          exit ${PIPESTATUS[0]}
+        shell: bash
+      - name: publish screenshots to gametest-out
+        if: always()
+        run: |
+          rm -rf out && mkdir out
+          cp run/screenshots/*.png out/ 2>/dev/null || true
+          grep -E "brawl|Exception|ERROR" gametest.log | tail -80 > out/log.txt || true
+          cd out
+          git init -q -b gametest-out && git add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -q -m "client gametest ${GITHUB_SHA::7} (${{ steps.gt.outcome }})" --allow-empty
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}" gametest-out
+      - name: fail if the gametest failed
+        if: steps.gt.outcome != 'success'
+        run: exit 1

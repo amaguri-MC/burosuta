@@ -1,0 +1,32 @@
+# Server gametests (src/gametest/**). Fails the job if any test fails.
+name: gametest
+on: [pull_request, push]
+
+jobs:
+  gametest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+      - name: setup jdk
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+      - name: run gametests
+        # The Fabric maven sometimes serves broken asm POMs for a moment: retry once.
+        run: ./gradlew runGameTest || ./gradlew runGameTest
+        shell: bash
+      - name: upload test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gametest-report
+          path: |
+            build/junit.xml
+            build/gametest/logs/
