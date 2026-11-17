@@ -41,6 +41,9 @@ public final class HudClient {
 		});
 		ClientPlayNetworking.registerGlobalReceiver(Net.BarsPayload.TYPE, (p, ctx) -> {
 			HudState.bars = p; HudState.barsTick = HudState.tick;
+			Set<Integer> ids = new HashSet<>();
+			for (int id : p.ids()) ids.add(id);
+			HudState.barIds = ids;
 		});
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> HudState.reset());
 
@@ -82,13 +85,28 @@ public final class HudClient {
 		boolean held = mc.options.keyAttack.isDown() || mc.options.keyUse.isDown();
 		if ((held || pendingClick) && HudState.tick - lastAttackSend >= 4) {
 			ClientPlayNetworking.send(new Net.AttackPayload(yaw));
+			skill(false);
 			lastAttackSend = HudState.tick;
 			pendingClick = false;
 		}
 
 		boolean sup = false;
 		while (superKey.consumeClick()) sup = true;
-		if (sup) ClientPlayNetworking.send(new Net.SuperPayload(yaw));
+		if (sup) { ClientPlayNetworking.send(new Net.SuperPayload(yaw)); skill(true); }
+	}
+
+	private static final java.util.Map<String, String[]> SKILLS = java.util.Map.of(
+			"shelly", new String[] { "バックショット", "スーパーシェル" },
+			"colt", new String[] { "6連発", "弾丸の雨" },
+			"bull", new String[] { "ダブルバレル", "ブルドーザー" },
+			"brock", new String[] { "ロケット", "ロケットの雨" },
+			"elprimo", new String[] { "エルプリモパンチ", "フライングエルボー" });
+
+	private static void skill(boolean sup) {
+		Net.HudPayload h = HudState.hud;
+		if (h == null) return;
+		String[] n = SKILLS.get(h.brawler());
+		if (n != null) HudState.showSkill(n[sup ? 1 : 0], sup);
 	}
 
 	/** 必殺技キーの表示名（HUDのヒント用）。 */

@@ -247,6 +247,7 @@ public class BrawlGameTests {
 				}
 				List<ItemEntity> cubes = h.getLevel().getEntitiesOfClass(ItemEntity.class, h.getBounds().inflate(12),
 						e -> e.getItem().is(ArenaBlocks.POWER_CUBE));
+				if (cubes.isEmpty() && s != null && s.cubes >= 1) { st.moved = true; return; } // 近くにいて既に拾った
 				if (cubes.isEmpty()) {
 					if (t > 40) {
 						cleanup(picker);

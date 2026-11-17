@@ -3,8 +3,12 @@
 	"package": "com.amaguri.brawl.client.hud.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
+		"AvatarRendererNameMixin",
 		"EntityRenderDispatcherMixin",
-		"MinecraftMixin"
+		"EntityRendererNameMixin",
+		"LivingEntityRendererNameMixin",
+		"MinecraftMixin",
+		"MobRendererNameMixin"
 	],
 	"injectors": { "defaultRequire": 1 }
 }

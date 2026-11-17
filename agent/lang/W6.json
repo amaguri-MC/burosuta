@@ -1,4 +1,14 @@
 {
   "key.brawl.super": "必殺技",
-  "key.category.brawl.main": "ブロスタ風バトル"
+  "key.category.brawl.main": "ブロスタ風バトル",
+  "brawl.hud.skill.shelly.normal": "バックショット",
+  "brawl.hud.skill.shelly.super": "スーパーシェル",
+  "brawl.hud.skill.colt.normal": "6連発",
+  "brawl.hud.skill.colt.super": "弾丸の雨",
+  "brawl.hud.skill.bull.normal": "ダブルバレル",
+  "brawl.hud.skill.bull.super": "ブルドーザー",
+  "brawl.hud.skill.brock.normal": "ロケット",
+  "brawl.hud.skill.brock.super": "ロケットの雨",
+  "brawl.hud.skill.elprimo.normal": "エルプリモパンチ",
+  "brawl.hud.skill.elprimo.super": "フライングエルボー"
 }

@@ -131,39 +131,76 @@ final class HudRenderer {
 		}
 	}
 
-	// ---- 頭上HPバー（実体の位置を画面に射影してHUDに描く） ----
+	// ---- 頭上表示（実体の位置を画面に射影してHUDに描く）: 名前 → HP数字 → HPバー → 弾（自分だけ） ----
+
+	static final int GREEN_CUBE = 0xFF58D84E, GREEN_CUBE_EDGE = 0xFF1E6A1C;
 
 	private static void overheadBars(GuiGraphicsExtractor g, Minecraft mc, Font font, DeltaTracker dt, int w, int h) {
 		Net.BarsPayload b = HudState.barsOrNull();
 		if (b == null || mc.level == null) return;
+		boolean firstPerson = mc.options.getCameraType().isFirstPerson();
 		float pt = dt.getGameTimeDeltaPartialTick(false);
 		int n = Math.min(b.ids().length, Math.min(b.hp().length, Math.min(b.maxHp().length,
 				Math.min(b.team().length, b.cubes().length))));
 		for (int i = 0; i < n; i++) {
+			boolean self = b.team()[i] == 0;
+			if (self && firstPerson) continue; // 自分の頭上表示は三人称のときだけ
 			Entity e = mc.level.getEntity(b.ids()[i]);
 			if (e == null || e.isRemoved() || !e.isAlive() || b.hp()[i] <= 0) continue;
 			if (HudState.isHidden(e)) continue; // 隠れた実体は出さない
 			double x = Mth.lerp(pt, e.xo, e.getX());
-			double y = Mth.lerp(pt, e.yo, e.getY()) + e.getBbHeight() + 0.45;
+			double y = Mth.lerp(pt, e.yo, e.getY()) + e.getBbHeight() + 0.55;
 			double z = Mth.lerp(pt, e.zo, e.getZ());
 			// UNVERIFIED: GameRenderer.projectPointToScreen は NDC（x,y が -1〜1、z>1 で背面）を返すと仮定
 			Vec3 ndc = mc.gameRenderer.projectPointToScreen(new Vec3(x, y, z));
 			if (ndc == null || ndc.z > 1.0 || ndc.z < -1.0 || Math.abs(ndc.x) > 1.1 || Math.abs(ndc.y) > 1.1) continue;
 			int sx = (int) ((ndc.x + 1.0) * 0.5 * w);
-			int sy = (int) ((1.0 - ndc.y) * 0.5 * h);
-			boolean self = b.team()[i] == 0;
+			int sy = (int) ((1.0 - ndc.y) * 0.5 * h); // バーの上端
 			int col = self ? GREEN : RED, bg = self ? GREEN_BG : RED_BG, edge = self ? GREEN_EDGE : RED_EDGE;
-			int bw = 40, bh = 4;
+			int bw = 46, bh = 5;
 			float f = b.maxHp()[i] <= 0 ? 0f : (float) b.hp()[i] / b.maxHp()[i];
-			bar(g, sx - bw / 2, sy - bh, bw, bh, f, col, bg, edge);
-			bigText(g, font, String.valueOf(b.hp()[i]), sx, sy - bh - 11, 1f, WHITE, edge);
+			bar(g, sx - bw / 2, sy, bw, bh, f, col, bg, edge);
+			bigText(g, font, String.valueOf(b.hp()[i]), sx, sy - 13, 1.25f, WHITE, TEXT_EDGE);
+			String name = e.getDisplayName().getString(); // ボットは名前タグのボット名、プレイヤーはプレイヤー名
+			bigText(g, font, name, sx, sy - 24, 1f, self ? WHITE : 0xFFFFE4E0, TEXT_EDGE);
 			if (b.cubes()[i] > 0) {
 				String cs = String.valueOf(b.cubes()[i]);
 				int tw = font.width(cs);
-				cubeIcon(g, sx - bw / 2 - 5 - tw - 4, sy - 3);
-				outlined(g, font, cs, sx - bw / 2 - 2 - tw, sy - 8, CUBE, CUBE_EDGE);
+				outlined(g, font, cs, sx - bw / 2 - 4 - tw, sy - 2, GREEN_CUBE, TEXT_EDGE);
+				cubeIcon(g, sx - bw / 2 - 4 - tw - 6, sy + 2, GREEN_CUBE, GREEN_CUBE_EDGE);
+			}
+			int below = sy + bh + 3;
+			if (self) {
+				Net.HudPayload hud = HudState.hud;
+				if (hud != null) {
+					int cnt = Math.max(1, hud.maxAmmo()), gap = 2;
+					int sw = (bw - gap * (cnt - 1)) / cnt;
+					int x0 = sx - (cnt * sw + gap * (cnt - 1)) / 2;
+					for (int k = 0; k < cnt; k++) {
+						float af = Mth.clamp(hud.ammo() - k, 0f, 1f);
+						bar(g, x0 + k * (sw + gap), below, sw, 3, af, AMMO, AMMO_BG, AMMO_EDGE);
+					}
+				}
+				below += 8;
+				skillPopup(g, font, sx, below);
 			}
 		}
+	}
+
+	/** 技名を1秒ふわっと（少し上がりながら出て消える）。 */
+	private static void skillPopup(GuiGraphicsExtractor g, Font font, int cx, int y) {
+		String t = HudState.skillText;
+		if (t == null) return;
+		long age = HudState.tick - HudState.skillStart, left = HudState.skillLast + 20 - HudState.tick;
+		if (left <= 0) return;
+		float in = Mth.clamp(age / 4f, 0f, 1f), out = Mth.clamp(left / 6f, 0f, 1f);
+		int a = (int) (255 * Math.min(in, out));
+		if (a < 12) return;
+		float rise = Mth.clamp(age / 10f, 0f, 1f) * 6f;
+		boolean sup = HudState.skillSuper;
+		int col = ((a << 24) | ((sup ? GOLD : WHITE) & 0xFFFFFF));
+		int edge = ((a << 24) | ((sup ? GOLD_EDGE : TEXT_EDGE) & 0xFFFFFF));
+		bigText(g, font, t, cx, y + 6 - (int) rise, 1.25f, col, edge);
 	}
 
 	// ---- 部品 ----
@@ -209,14 +246,16 @@ final class HudRenderer {
 	}
 
 	/** 小さな菱形（パワーキューブの印）。中心 (cx,cy)。 */
-	static void cubeIcon(GuiGraphicsExtractor g, int cx, int cy) {
+	static void cubeIcon(GuiGraphicsExtractor g, int cx, int cy) { cubeIcon(g, cx, cy, CUBE, CUBE_EDGE); }
+
+	static void cubeIcon(GuiGraphicsExtractor g, int cx, int cy, int fillCol, int edgeCol) {
 		for (int dy = -4; dy <= 4; dy++) {
 			int half = 4 - Math.abs(dy);
-			g.fill(cx - half, cy + dy, cx + half + 1, cy + dy + 1, CUBE_EDGE);
+			g.fill(cx - half, cy + dy, cx + half + 1, cy + dy + 1, edgeCol);
 		}
 		for (int dy = -3; dy <= 3; dy++) {
 			int half = 3 - Math.abs(dy);
-			g.fill(cx - half, cy + dy, cx + half + 1, cy + dy + 1, CUBE);
+			g.fill(cx - half, cy + dy, cx + half + 1, cy + dy + 1, fillCol);
 		}
 	}
 

@@ -22,7 +22,24 @@ public final class HudState {
 	public static Set<Integer> hidden = Set.of();
 	public static long hiddenTick = -1000;
 
+	public static Set<Integer> barIds = Set.of();
+	public static String skillText = null;
+	public static boolean skillSuper = false;
+	public static long skillStart = -1000, skillLast = -1000;
+
+	/** 技名を出す（同じ技が続くあいだは出しっぱなしにして延長）。 */
+	public static void showSkill(String text, boolean sup) {
+		if (!text.equals(skillText) || tick > skillLast + 20) skillStart = tick;
+		skillText = text; skillSuper = sup; skillLast = tick;
+	}
+
+	/** 試合中に自前の頭上表示へ置き換える実体か（バニラの名前タグを消す対象）。 */
+	public static boolean replacesNameTag(Entity e) {
+		return active() && (e instanceof net.minecraft.world.entity.player.Player || barIds.contains(e.getId()));
+	}
+
 	public static void reset() {
+		barIds = Set.of(); skillText = null;
 		hud = null; match = null; bars = null; hidden = Set.of();
 		hudTick = matchTick = barsTick = hiddenTick = -1000;
 	}
