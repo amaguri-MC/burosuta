@@ -1,0 +1,9 @@
+{
+	"required": true,
+	"package": "com.amaguri.brawl.client.model.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"BrawlerRenderDispatcherMixin"
+	],
+	"injectors": { "defaultRequire": 1 }
+}

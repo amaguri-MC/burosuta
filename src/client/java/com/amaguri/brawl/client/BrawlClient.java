@@ -8,5 +8,6 @@ public class BrawlClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		com.amaguri.brawl.client.hud.HudClient.init();       // W6 HUD・入力・茂み非表示・HPバー
 		com.amaguri.brawl.client.bot.BotClient.init();       // W5 ボットの描画
+		com.amaguri.brawl.client.model.ModelClient.init();   // M0 キャラモデル（プレイヤー・ボット共通）
 	}
 }
