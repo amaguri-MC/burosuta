@@ -56,8 +56,18 @@ public final class Boxes {
 		return null;
 	}
 
+	/** マップ外（テストなど）の箱: 隣の BOX から 2x2x2 の北西下角を求める。 */
+	private static BlockPos findLoose(ServerLevel lvl, BlockPos pos) {
+		if (lvl.getBlockState(pos).getBlock() != ArenaBlocks.BOX) return null;
+		int x = lvl.getBlockState(pos.west()).getBlock() == ArenaBlocks.BOX ? pos.getX() - 1 : pos.getX();
+		int y = lvl.getBlockState(pos.below()).getBlock() == ArenaBlocks.BOX ? pos.getY() - 1 : pos.getY();
+		int z = lvl.getBlockState(pos.north()).getBlock() == ArenaBlocks.BOX ? pos.getZ() - 1 : pos.getZ();
+		return new BlockPos(x, y, z);
+	}
+
 	public static void damage(ServerLevel lvl, BlockPos pos, int dmg, LivingEntity by) {
 		BlockPos b = find(pos);
+		if (b == null) b = findLoose(lvl, pos);
 		if (b == null) return;
 		if (lvl.getBlockState(b).getBlock() != ArenaBlocks.BOX && lvl.getBlockState(pos).getBlock() != ArenaBlocks.BOX) {
 			return; // すでに壊れている

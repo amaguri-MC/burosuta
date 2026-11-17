@@ -35,13 +35,26 @@ final class Cubes {
 		}
 	}
 
-	/** 毎tick: アリーナ内のアイテムを調べる。キューブは近くの参加者へ、それ以外（投げ捨てた物）は消す。戻り値=消した非キューブの数。 */
+	/** 試合外用: 参加者の近くのキューブだけ拾わせる（他のアイテムは触らない）。 */
+	static void pickupNear(ServerLevel lvl, List<LivingEntity> ps) {
+		for (LivingEntity e : ps) {
+			AABB box = e.getBoundingBox().inflate(PICKUP_RANGE, 1.0, PICKUP_RANGE);
+			tick(lvl, box, List.of(e), true);
+		}
+	}
+
 	static int tick(ServerLevel lvl, AABB arena, List<LivingEntity> candidates) {
+		return tick(lvl, arena, candidates, false);
+	}
+
+	/** 毎tick: アリーナ内のアイテムを調べる。キューブは近くの参加者へ、それ以外（投げ捨てた物）は消す。戻り値=消した非キューブの数。 */
+	private static int tick(ServerLevel lvl, AABB arena, List<LivingEntity> candidates, boolean cubesOnly) {
 		int removedOther = 0;
 		for (ItemEntity ie : lvl.getEntitiesOfClass(ItemEntity.class, arena)) {
 			if (ie.isRemoved()) continue;
 			ItemStack st = ie.getItem();
 			if (st.getItem() != ArenaBlocks.POWER_CUBE) {
+				if (cubesOnly) continue;
 				ie.discard();
 				removedOther++;
 				continue;

@@ -25,10 +25,10 @@ public final class Arena {
 		int bx = o.getX() + Math.floorDiv(pos.getX() - o.getX(), 2) * 2;
 		int bz = o.getZ() + Math.floorDiv(pos.getZ() - o.getZ(), 2) * 2;
 		boolean any = false;
-		for (int dy = 0; dy < ArenaMap.HEIGHT; dy++) {
+		for (int dy = -(ArenaMap.HEIGHT - 1); dy < ArenaMap.HEIGHT; dy++) {
 			for (int dx = 0; dx < 2; dx++) {
 				for (int dz = 0; dz < 2; dz++) {
-					BlockPos p = new BlockPos(bx + dx, o.getY() + dy, bz + dz);
+					BlockPos p = new BlockPos(bx + dx, pos.getY() + dy, bz + dz);
 					if (lvl.getBlockState(p).is(ArenaBlocks.WALL)) {
 						lvl.destroyBlock(p, false); // 破片パーティクルと音。ドロップなし
 						any = true;

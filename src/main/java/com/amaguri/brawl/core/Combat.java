@@ -63,9 +63,8 @@ public final class Combat {
 		ServerTickEvents.END_SERVER_TICK.register(Combat::onTick);
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			ServerPlayer p = handler.getPlayer();
-			BrawlState st = STATES.remove(p.getUUID());
-			ORIGINAL_SPEED.remove(p.getUUID());
-			ENTITIES.remove(p.getUUID());
+			// 状態は消さない（試合側 mode が DISCONNECT でキューブを落としてから Combat.leave する）
+			BrawlState st = STATES.get(p.getUUID());
 			if (st != null) restoreSpeed(p, null);
 		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {

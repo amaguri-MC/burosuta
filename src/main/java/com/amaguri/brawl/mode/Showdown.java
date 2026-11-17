@@ -65,7 +65,7 @@ public final class Showdown {
 
 	/** 参加者1人ぶん（プレイヤーもボットも）。 */
 	static final class Entrant {
-		final UUID id;
+		UUID id;                     // ボットは spawn 後に実体の UUID へ付け直す
 		final String name;
 		final String brawlerId;
 		final boolean bot;
@@ -140,6 +140,12 @@ public final class Showdown {
 		return match != null;
 	}
 
+	/** 試合中（カウントダウン・終了表示を除く）。 */
+	public static boolean playing() {
+		Match m = match;
+		return m != null && m.phase == Phase.PLAYING;
+	}
+
 	/** Boxes 用: 試合中のレイアウト。無ければ null。 */
 	static ArenaLayout currentLayout() {
 		Match m = match;
@@ -203,11 +209,15 @@ public final class Showdown {
 				e.spawn = spawns.get(i);
 				e.yaw = (float) Math.toDegrees(Math.atan2(-(center.x - e.spawn.x), center.z - e.spawn.z));
 			}
-			for (Entrant e : m.entrants) {
+			for (java.util.Iterator<Entrant> it = m.entrants.iterator(); it.hasNext();) {
+				Entrant e = it.next();
 				if (e.bot) {
-					BrawlBot bot = BrawlBot.spawn(lvl, e.spawn, e.brawlerId, e.name);
+					BrawlBot bot = BrawlBot.spawn(lvl, e.spawn, e.brawlerId, e.name); // spawn の中で Combat.join 済み
+					m.byId.remove(e.id);
+					if (bot == null) { it.remove(); continue; }
 					e.botEntity = bot;
-					Combat.join(bot, e.brawlerId);
+					e.id = bot.getUUID();
+					m.byId.put(e.id, e);
 				} else {
 					ServerPlayer p = server.getPlayerList().getPlayer(e.id);
 					if (p != null) prepare(m, e, p);
@@ -242,8 +252,8 @@ public final class Showdown {
 		e.prepared = true;
 		p.closeContainer();
 		p.setGameMode(GameType.ADVENTURE);
-		Brawlers.giveKit(p);
 		Combat.join(p, e.brawlerId);
+		Brawlers.giveKit(p);
 		p.fallDistance = 0;
 		p.teleportTo(m.level, e.spawn.x, e.spawn.y, e.spawn.z, Set.of(), e.yaw, 0f, true);
 		BrawlerDef def = Brawlers.get(e.brawlerId);
@@ -254,7 +264,13 @@ public final class Showdown {
 
 	private static void tick(MinecraftServer server) {
 		Match m = match;
-		if (m == null) return;
+		if (m == null) {
+			for (net.minecraft.server.level.ServerLevel l : server.getAllLevels()) {
+				List<LivingEntity> ps = Combat.participants(l);
+				if (!ps.isEmpty()) Cubes.pickupNear(l, ps);
+			}
+			return;
+		}
 		try {
 			tickMatch(server, m);
 		} catch (RuntimeException ex) {
@@ -490,6 +506,9 @@ public final class Showdown {
 				m.winner = w;
 				w.rank = 1;
 			}
+		}
+		if (m.winner == null) { // 最後の2人が同時に倒れた: 後に倒れた方(#1)を勝者に
+			for (Entrant e : m.entrants) if (e.rank == 1) m.winner = e;
 		}
 		List<Entrant> order = new ArrayList<>(m.entrants);
 		order.sort(Comparator.comparingInt((Entrant e) -> e.rank == 0 ? 99 : e.rank));

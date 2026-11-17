@@ -186,6 +186,7 @@ public class BrawlBot extends PathfinderMob {
 			return;
 		}
 		setSprinting(false);
+		if (isNoAi()) return;
 		think(lvl, st);
 	}
 

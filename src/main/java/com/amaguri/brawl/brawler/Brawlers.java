@@ -59,6 +59,7 @@ public final class Brawlers {
 
 	public static boolean attack(LivingEntity user, float yawDeg) {
 		if (user == null || !(user.level() instanceof ServerLevel lvl)) return false;
+		if (com.amaguri.brawl.mode.Showdown.running() && !com.amaguri.brawl.mode.Showdown.playing()) return false;
 		BrawlState st = activeState(user);
 		if (st == null) return false;
 		BrawlerDef def = get(st.brawlerId);
@@ -74,6 +75,7 @@ public final class Brawlers {
 
 	public static boolean useSuper(LivingEntity user, float yawDeg) {
 		if (user == null || !(user.level() instanceof ServerLevel lvl)) return false;
+		if (com.amaguri.brawl.mode.Showdown.running() && !com.amaguri.brawl.mode.Showdown.playing()) return false;
 		BrawlState st = activeState(user);
 		if (st == null) return false;
 		BrawlerDef def = get(st.brawlerId);

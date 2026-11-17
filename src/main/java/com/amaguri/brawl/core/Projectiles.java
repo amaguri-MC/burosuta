@@ -118,7 +118,8 @@ public final class Projectiles {
 			BlockState bs = a.lvl.getBlockState(bp);
 			if (Arena.isBulletSolid(bs)) {
 				if (bs.getBlock() == ArenaBlocks.BOX) {
-					Boxes.damage(a.lvl, bp, s.damage(), s.owner());
+					BrawlState os = s.owner() == null ? null : Combat.state(s.owner());
+					Boxes.damage(a.lvl, bp, Math.round(s.damage() * (os == null ? 1f : os.damageMul())), s.owner());
 					a.pos = to;
 					finish(a, to, true);
 					return;
