@@ -88,7 +88,7 @@ public class BrawlGameTests {
 	// ---- 1. ラスティの通常攻撃が正面6ブロックのボットに当たる ----
 
 	@GameTest(maxTicks = 100)
-	public void shellyAttackDamagesBotInFront(GameTestHelper h) {
+	public void rustyAttackDamagesBotInFront(GameTestHelper h) {
 		final int f = FLOOR_HIT;
 		buildStage(h, f);
 		BrawlBot shooter = bot(h, f, 8.5, 3.5, "rusty", "Shooter");
@@ -163,7 +163,7 @@ public class BrawlGameTests {
 	// ---- 3. ゲージ満タンで useSuper → 前方の WALL タイルが消える ----
 
 	@GameTest(maxTicks = 100)
-	public void shellySuperBreaksWallTile(GameTestHelper h) {
+	public void rustySuperBreaksWallTile(GameTestHelper h) {
 		final int f = FLOOR_SUPER;
 		buildStage(h, f);
 		// タイル(2x2)の位置は絶対座標で偶数に揃える
