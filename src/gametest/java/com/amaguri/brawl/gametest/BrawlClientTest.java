@@ -23,7 +23,7 @@ public class BrawlClientTest implements FabricClientGameTest {
 	public void runTest(ClientGameTestContext context) {
 		context.runOnClient(c -> {
 			c.options.languageCode = "ja_jp";
-			c.options.renderDistance().set(10);
+			c.options.renderDistance().set(6);
 			// UNVERIFIED: 26.2 の Options に hideGui フィールドが apidump に無い。既定で HUD は出る（隠さない）
 		});
 		try (TestSingleplayerContext sp = context.worldBuilder().create()) {
