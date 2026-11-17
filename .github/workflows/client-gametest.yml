@@ -37,7 +37,7 @@ jobs:
         run: |
           rm -rf out && mkdir out
           cp run/screenshots/*.png out/ 2>/dev/null || true
-          grep -E "brawl|Exception|ERROR" gametest.log | tail -80 > out/log.txt || true
+          grep -E "brawl|Exception|ERROR|Timed out|at com.amaguri" gametest.log | cut -c1-400 | grep -v "Unknown custom packet" | tail -120 > out/log.txt || true
           cd out
           git init -q -b gametest-out && git add -A
           git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -q -m "client gametest ${GITHUB_SHA::7} (${{ steps.gt.outcome }})" --allow-empty
