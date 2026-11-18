@@ -384,7 +384,8 @@ public class BrawlGameTests {
 			if (t >= 1 && (t - 1) % 20 == 0 && (t - 1) / 20 < z.length) {
 				int i = (int) ((t - 1) / 20);
 				z[i] = runner.getZ();
-				System.out.println("[BOTSPEED] t=" + t + " z=" + runner.getZ() + " x=" + runner.getX());
+				System.out.println("[BOTSPEED] t=" + t + " z=" + runner.getZ() + " x=" + runner.getX() + " y=" + runner.getY() + " ground=" + runner.onGround() + " dm=" + runner.getDeltaMovement()
+						+ " nav=" + runner.getNavigation().isInProgress() + " below=" + h.getLevel().getBlockState(runner.blockPosition().below()));
 			}
 			if (t == 1 + 20 * 5) {
 				// 2〜5秒目の平均（加速の立ち上がりを除く）
