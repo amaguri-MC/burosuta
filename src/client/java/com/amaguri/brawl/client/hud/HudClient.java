@@ -96,7 +96,7 @@ public final class HudClient {
 			pendingClick |= click;
 			boolean held = mc.options.keyAttack.isDown() || mc.options.keyUse.isDown();
 			if ((held || pendingClick) && HudState.tick - lastAttackSend >= 4) {
-				ClientPlayNetworking.send(new Net.AttackPayload(yaw));
+				ClientPlayNetworking.send(new Net.AttackPayload(yaw, 0f));
 				skill(false);
 				lastAttackSend = HudState.tick;
 				pendingClick = false;
@@ -107,7 +107,7 @@ public final class HudClient {
 
 		boolean sup = false;
 		while (superKey.consumeClick()) sup = true;
-		if (sup) { ClientPlayNetworking.send(new Net.SuperPayload(yaw)); skill(true); }
+		if (sup) { ClientPlayNetworking.send(new Net.SuperPayload(yaw, TopDown.active() ? com.amaguri.brawl.client.view.TopDownClient.aimDistance(mc) : 0f)); skill(true); }
 	}
 
 	private static void skill(boolean sup) {

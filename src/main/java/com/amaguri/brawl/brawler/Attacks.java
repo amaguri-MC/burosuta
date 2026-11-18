@@ -102,7 +102,7 @@ final class Attacks {
 
 	// ---------- 通常攻撃 ----------
 
-	static void normal(ServerLevel lvl, LivingEntity u, String id, float yaw) {
+	static void normal(ServerLevel lvl, LivingEntity u, String id, float yaw, float aimDist) {
 		Vec3 d = dir(yaw);
 		Vec3 m = muzzle(u, d);
 		switch (id) {
@@ -186,7 +186,8 @@ final class Attacks {
 			}
 			case "barley" -> {
 				sound(lvl, m, SoundEvents.WITCH_THROW, 0.9f, 1.0f);
-				Vec3 land = u.position().add(d.scale(lobDistance(lvl, u, d)));
+				double ld = aimDist > 0 ? Math.min(aimDist, Tiles.b(BARLEY_RANGE)) : lobDistance(lvl, u, d);
+				Vec3 land = u.position().add(d.scale(ld));
 				lobPotion(lvl, u, land, true, BARLEY_PUDDLE_TICKS);
 			}
 			default -> {}
@@ -211,7 +212,7 @@ final class Attacks {
 
 	// ---------- 必殺 ----------
 
-	static void superMove(ServerLevel lvl, LivingEntity u, String id, float yaw) {
+	static void superMove(ServerLevel lvl, LivingEntity u, String id, float yaw, float aimDist) {
 		Vec3 d = dir(yaw);
 		Vec3 m = muzzle(u, d);
 		switch (id) {
@@ -238,11 +239,11 @@ final class Attacks {
 			}
 			case "poco" -> pocoHeal(lvl, u, yaw);
 			case "mortis" -> mortisBats(lvl, u, yaw);
-			case "edgar" -> edgarLeap(lvl, u, d);
-			case "lou" -> iceFloor(lvl, u, d);
-			case "mimosa" -> brockRain(lvl, u, d);
-			case "nita" -> summonBear(lvl, u, d);
-			case "barley" -> potionRain(lvl, u, d);
+			case "edgar" -> edgarLeap(lvl, u, d, aimDist);
+			case "lou" -> iceFloor(lvl, u, d, aimDist);
+			case "mimosa" -> brockRain(lvl, u, d, aimDist);
+			case "nita" -> summonBear(lvl, u, d, aimDist);
+			case "barley" -> potionRain(lvl, u, d, aimDist);
 			default -> {}
 		}
 	}
@@ -370,10 +371,11 @@ final class Attacks {
 
 	// ---------- エドガー: 跳躍（壁を越える）→ 着地後に加速 ----------
 
-	private static void edgarLeap(ServerLevel lvl, LivingEntity u, Vec3 d) {
+	private static void edgarLeap(ServerLevel lvl, LivingEntity u, Vec3 d, float aimDist) {
 		// 向きしか分からないので、正面の敵がいればその手前に降りる（lobDistance と同じ考え方）
 		double max = Tiles.b(EDGAR_SUPER_LEAP_TILES);
-		double dist = Math.min(max, Math.max(1.0, aimDistance(lvl, u, d, max) - 1.2));
+		double dist = aimDist > 0 ? Math.min(max, Math.max(1.0, aimDist))
+				: Math.min(max, Math.max(1.0, aimDistance(lvl, u, d, max) - 1.2));
 		leap(lvl, u, d, dist, EDGAR_SUPER_FLIGHT_TICKS, EDGAR_SUPER_HEIGHT_BLOCKS, land -> {
 			Combat.haste(u, EDGAR_HASTE_TICKS, Tiles.b(EDGAR_HASTE_TILES_PER_SEC));
 			lvl.sendParticles(ParticleTypes.POOF, land.x, land.y + 0.2, land.z, 12, 0.5, 0.1, 0.5, 0.08);
@@ -426,10 +428,10 @@ final class Attacks {
 
 	// ---------- ルー: 氷の床 ----------
 
-	private static void iceFloor(ServerLevel lvl, LivingEntity u, Vec3 d) {
+	private static void iceFloor(ServerLevel lvl, LivingEntity u, Vec3 d, float aimDist) {
 		// 向きしか分からないので、正面の敵がいればその位置（最大8タイル）に敷く
 		double max = Tiles.b(LOU_SUPER_RANGE);
-		double dist = Math.max(1.5, aimDistance(lvl, u, d, max));
+		double dist = aimDist > 0 ? Math.min(max, Math.max(1.5, aimDist)) : Math.max(1.5, aimDistance(lvl, u, d, max));
 		Vec3 p = u.position().add(d.scale(dist));
 		while (dist > 1.0 && blocked(lvl, p)) {
 			dist -= 0.5;
@@ -441,8 +443,9 @@ final class Attacks {
 		Combat.addIceFloor(lvl, u, p, Tiles.b(LOU_FLOOR_RADIUS_TILES), LOU_FLOOR_TICKS, LOU_SLOW_TICKS, LOU_SLOW_MUL, LOU_STOP_TICKS);
 	}
 
-	private static void brockRain(ServerLevel lvl, LivingEntity u, Vec3 d) {
-		Vec3 center = u.position().add(d.scale(Tiles.b(MIMOSA_SUPER_CENTER_TILES)));
+	private static void brockRain(ServerLevel lvl, LivingEntity u, Vec3 d, float aimDist) {
+		double cd = aimDist > 0 ? Math.min(aimDist, Tiles.b(MIMOSA_SUPER_CENTER_TILES)) : Tiles.b(MIMOSA_SUPER_CENTER_TILES);
+		Vec3 center = u.position().add(d.scale(cd));
 		double area = Tiles.b(MIMOSA_SUPER_AREA_TILES);
 		sound(lvl, u.position(), SoundEvents.FIREWORK_ROCKET_SHOOT, 1.0f, 0.5f);
 		for (int i = 0; i < MIMOSA_SUPER_ROCKETS; i++) {
@@ -470,9 +473,9 @@ final class Attacks {
 	// ---------- ニタ: 相棒のクマ ----------
 
 	/** 狙った方向（最大 NITA_SUPER_RANGE タイル先。壁の中なら手前）にクマを呼ぶ。前の相棒は消える。 */
-	private static void summonBear(ServerLevel lvl, LivingEntity u, Vec3 d) {
+	private static void summonBear(ServerLevel lvl, LivingEntity u, Vec3 d, float aimDist) {
 		Combat.dismissSummons(u.getUUID());
-		double dist = Tiles.b(NITA_SUPER_RANGE);
+		double dist = aimDist > 0 ? Math.min(aimDist, Tiles.b(NITA_SUPER_RANGE)) : Tiles.b(NITA_SUPER_RANGE);
 		Vec3 p = u.position().add(d.scale(dist));
 		while (dist > 1.0 && blocked(lvl, p)) {
 			dist -= 0.5;
@@ -539,8 +542,9 @@ final class Attacks {
 	}
 
 	/** 必殺: 前方の広い範囲に複数のポーション。 */
-	private static void potionRain(ServerLevel lvl, LivingEntity u, Vec3 d) {
-		Vec3 center = u.position().add(d.scale(Tiles.b(BARLEY_SUPER_CENTER_TILES)));
+	private static void potionRain(ServerLevel lvl, LivingEntity u, Vec3 d, float aimDist) {
+		double cd = aimDist > 0 ? Math.min(aimDist, Tiles.b(BARLEY_SUPER_CENTER_TILES)) : Tiles.b(BARLEY_SUPER_CENTER_TILES);
+		Vec3 center = u.position().add(d.scale(cd));
 		double area = Tiles.b(BARLEY_SUPER_AREA_TILES);
 		sound(lvl, u.position(), SoundEvents.WITCH_THROW, 1.0f, 0.7f);
 		for (int i = 0; i < BARLEY_SUPER_BOTTLES; i++) {

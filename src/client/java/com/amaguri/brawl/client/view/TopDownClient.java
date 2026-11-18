@@ -60,10 +60,17 @@ public final class TopDownClient {
 		pendingClick |= click;
 		boolean held = mc.options.keyAttack.isDown() || (!inLobby && mc.options.keyUse.isDown());
 		if ((held || pendingClick) && tick - lastAttackSend >= 4) {
-			ClientPlayNetworking.send(new Net.AttackPayload(yaw));
+			ClientPlayNetworking.send(new Net.AttackPayload(yaw, aimDistance(mc)));
 			lastAttackSend = tick;
 			pendingClick = false;
 		}
+	}
+
+	/** 見下ろし中の照準点までの水平距離（ブロック）。照準点が無ければ 0。 */
+	public static float aimDistance(Minecraft mc) {
+		Vec3 a = TopDown.aimPoint();
+		if (a == null || mc.player == null) return 0f;
+		return (float) Math.hypot(a.x - mc.player.getX(), a.z - mc.player.getZ());
 	}
 
 	/** カーソルの光線に当たる一番近い実体へ、バニラの「右クリック」を送る。 */

@@ -93,19 +93,19 @@ public final class Net {
 		@Override public Type<LooksPayload> type() { return TYPE; }
 	}
 
-	/** C2S 通常攻撃（左クリック or 右クリック）。yaw は度。brawler が受けて Brawlers.attack を呼ぶ。 */
-	public record AttackPayload(float yaw) implements CustomPacketPayload {
+	/** C2S 通常攻撃。yaw は度、dist は照準点までの水平距離（ブロック。0=不明→サーバーが決める）。投げ・跳躍・設置の着地点に使う。 */
+	public record AttackPayload(float yaw, float dist) implements CustomPacketPayload {
 		public static final Type<AttackPayload> TYPE = typeOf("attack");
 		public static final StreamCodec<RegistryFriendlyByteBuf, AttackPayload> CODEC = StreamCodec.of(
-				(b, p) -> b.writeFloat(p.yaw), b -> new AttackPayload(b.readFloat()));
+				(b, p) -> { b.writeFloat(p.yaw); b.writeFloat(p.dist); }, b -> new AttackPayload(b.readFloat(), b.readFloat()));
 		@Override public Type<AttackPayload> type() { return TYPE; }
 	}
 
-	/** C2S 必殺技（キー既定 R）。yaw は度。brawler が受けて Brawlers.useSuper を呼ぶ。 */
-	public record SuperPayload(float yaw) implements CustomPacketPayload {
+	/** C2S 必殺技（キー既定 R）。yaw は度、dist は照準点までの距離（0=不明）。 */
+	public record SuperPayload(float yaw, float dist) implements CustomPacketPayload {
 		public static final Type<SuperPayload> TYPE = typeOf("super");
 		public static final StreamCodec<RegistryFriendlyByteBuf, SuperPayload> CODEC = StreamCodec.of(
-				(b, p) -> b.writeFloat(p.yaw), b -> new SuperPayload(b.readFloat()));
+				(b, p) -> { b.writeFloat(p.yaw); b.writeFloat(p.dist); }, b -> new SuperPayload(b.readFloat(), b.readFloat()));
 		@Override public Type<SuperPayload> type() { return TYPE; }
 	}
 

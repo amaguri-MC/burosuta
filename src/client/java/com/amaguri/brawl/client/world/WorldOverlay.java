@@ -2,6 +2,7 @@ package com.amaguri.brawl.client.world;
 
 import com.amaguri.brawl.api.Net;
 import com.amaguri.brawl.api.Tiles;
+import com.amaguri.brawl.brawler.AimShapes;
 import com.amaguri.brawl.brawler.BrawlerDef;
 import com.amaguri.brawl.brawler.Brawlers;
 import com.amaguri.brawl.client.hud.HudState;
@@ -72,11 +73,14 @@ public final class WorldOverlay {
 			if (def != null) {
 				boolean sup = InputConstants.isKeyDown(mc.getWindow(), GLFW_KEY_R); // UNVERIFIED: 既定キーRのみ（再割り当ては追従しない）
 				double range = (sup ? def.superRangeTiles() : def.attackRangeTiles()) * Tiles.BLOCKS_PER_TILE;
+				AimShapes.Shape shape = sup ? AimShapes.superShape(def.id()) : AimShapes.normal(def.id());
 				Vec3 feet = mc.player.getPosition(partial);
 				float yaw = TopDown.aimYaw();
+				Vec3 aim = TopDown.aimPoint();
+				double aimDist = aim == null ? -1 : Math.hypot(aim.x - feet.x, aim.z - feet.z);
 				ps.pushPose();
 				ctx.submitNodeCollector().submitCustomGeometry(ps, RenderTypes.debugQuads(),
-						(pose, vc) -> drawGuide(pose, vc, cam, feet, yaw, range, sup));
+						(pose, vc) -> drawGuide(pose, vc, cam, feet, yaw, range, sup, shape, aimDist));
 				ps.popPose();
 			}
 		}
@@ -135,17 +139,80 @@ public final class WorldOverlay {
 
 	// ---- 射程ガイド ----
 
-	private static void drawGuide(PoseStack.Pose p, VertexConsumer vc, Vec3 cam, Vec3 feet, float yawDeg, double range, boolean sup) {
+	private static void drawGuide(PoseStack.Pose p, VertexConsumer vc, Vec3 cam, Vec3 feet, float yawDeg, double range, boolean sup,
+			AimShapes.Shape shape, double aimDist) {
 		double r = Math.toRadians(yawDeg);
 		double dx = -Math.sin(r), dz = Math.cos(r);   // 向き（MC の yaw 規約）
-		double px = -dz * 0.5, pz = dx * 0.5;          // 幅 1.0 の半分だけ横へ
 		double y = feet.y + 0.05;
 		float cr = 1f, cg = sup ? 0.85f : 1f, cb = sup ? 0.10f : 1f;
-		double tip = Math.min(1.5, range);
-		int body = argb(0.28f, cr, cg, cb), bright = argb(0.55f, cr, cg, cb);
-		double mid = range - tip;
-		strip(p, vc, cam, feet, dx, dz, px, pz, y, 0, mid, body, body);
-		strip(p, vc, cam, feet, dx, dz, px, pz, y, mid, range, body, bright);
+		int body = argb(0.28f, cr, cg, cb), bright = argb(0.55f, cr, cg, cb), faint = argb(0.10f, cr, cg, cb);
+		if (shape == null) { // 形が未定義なら従来のまっすぐの帯
+			double px = -dz * 0.5, pz = dx * 0.5;
+			double tip = Math.min(1.5, range), mid = range - tip;
+			strip(p, vc, cam, feet, dx, dz, px, pz, y, 0, mid, body, body);
+			strip(p, vc, cam, feet, dx, dz, px, pz, y, mid, range, body, bright);
+			return;
+		}
+		switch (shape.kind()) {
+			case FAN -> {
+				int n = Math.max(4, (int) Math.ceil(shape.angleDeg() / 3.0));
+				double half = Math.toRadians(shape.angleDeg() / 2);
+				for (int i = 0; i < n; i++) {
+					double a0 = r - half + 2 * half * i / n, a1 = r - half + 2 * half * (i + 1) / n;
+					double x0 = feet.x - Math.sin(a0) * shape.range(), z0 = feet.z + Math.cos(a0) * shape.range();
+					double x1 = feet.x - Math.sin(a1) * shape.range(), z1 = feet.z + Math.cos(a1) * shape.range();
+					v(p, vc, cam, feet.x, y, feet.z, faint); v(p, vc, cam, x0, y, z0, body);
+					v(p, vc, cam, x1, y, z1, body); v(p, vc, cam, feet.x, y, feet.z, faint);
+				}
+				// 外周の縁
+				for (int i = 0; i < n; i++) {
+					double a0 = r - half + 2 * half * i / n, a1 = r - half + 2 * half * (i + 1) / n;
+					double R = shape.range();
+					v(p, vc, cam, feet.x - Math.sin(a0) * (R - 0.25), y, feet.z + Math.cos(a0) * (R - 0.25), body);
+					v(p, vc, cam, feet.x - Math.sin(a0) * R, y, feet.z + Math.cos(a0) * R, bright);
+					v(p, vc, cam, feet.x - Math.sin(a1) * R, y, feet.z + Math.cos(a1) * R, bright);
+					v(p, vc, cam, feet.x - Math.sin(a1) * (R - 0.25), y, feet.z + Math.cos(a1) * (R - 0.25), body);
+				}
+			}
+			case LINE, DASH -> {
+				double px = -dz * shape.width() / 2, pz = dx * shape.width() / 2;
+				double tip = Math.min(1.5, shape.range()), mid = shape.range() - tip;
+				strip(p, vc, cam, feet, dx, dz, px, pz, y, 0, mid, body, body);
+				strip(p, vc, cam, feet, dx, dz, px, pz, y, mid, shape.range(), body, bright);
+			}
+			case CIRCLE_SELF -> {
+				disc(p, vc, cam, feet.x, y, feet.z, shape.radius(), body);
+				ring(p, vc, cam, feet.x, y, feet.z, Math.max(0, shape.radius() - 0.15), shape.radius(), bright);
+			}
+			case LOB, JUMP, SUMMON -> {
+				// 照準点を最大射程で切る（照準点が無ければ最大射程）。近すぎても 1 ブロックは離す
+				double d = aimDist < 0 ? shape.range() : Math.max(1.0, Math.min(aimDist, shape.range()));
+				double cx = feet.x + dx * d, cz = feet.z + dz * d;
+				disc(p, vc, cam, cx, y, cz, shape.radius(), body);
+				ring(p, vc, cam, cx, y, cz, Math.max(0, shape.radius() - 0.15), shape.radius(), bright);
+				if (shape.kind() != AimShapes.Kind.SUMMON) { // 放物線の点線（プレイヤー → 照準点）
+					double h = 3.0; // lobPotion と同じ高さ
+					int segs = Math.max(8, (int) (d * 1.5)) * 2;
+					for (int i = 0; i < segs; i += 2) {
+						double f = (i + 0.5) / segs;
+						double px = feet.x + dx * d * f, pz = feet.z + dz * d * f, py = feet.y + 0.1 + 4 * h * f * (1 - f);
+						box(p, vc, cam, px - 0.09, py - 0.09, pz - 0.09, px + 0.09, py + 0.09, pz + 0.09, bright);
+					}
+				}
+			}
+		}
+	}
+
+	/** 塗りつぶした円（扇状の三角形）。 */
+	private static void disc(PoseStack.Pose p, VertexConsumer vc, Vec3 cam, double cx, double y, double cz, double rad, int c) {
+		final int n = 32;
+		for (int i = 0; i < n; i++) {
+			double a0 = Math.PI * 2 * i / n, a1 = Math.PI * 2 * (i + 1) / n;
+			v(p, vc, cam, cx, y, cz, c);
+			v(p, vc, cam, cx + Math.cos(a0) * rad, y, cz + Math.sin(a0) * rad, c);
+			v(p, vc, cam, cx + Math.cos(a1) * rad, y, cz + Math.sin(a1) * rad, c);
+			v(p, vc, cam, cx, y, cz, c);
+		}
 	}
 
 	private static void strip(PoseStack.Pose p, VertexConsumer vc, Vec3 cam, Vec3 o, double dx, double dz, double px, double pz,

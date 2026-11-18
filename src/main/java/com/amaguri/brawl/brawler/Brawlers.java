@@ -47,8 +47,8 @@ public final class Brawlers {
 		SUMMONS.put(bear.id(), bear);
 		Tasks.init();
 		// ハンドラはサーバースレッドで呼ばれる（Fabric）。試合外・脱落後は attack/useSuper 側で false
-		ServerPlayNetworking.registerGlobalReceiver(Net.AttackPayload.TYPE, (payload, ctx) -> attack(ctx.player(), payload.yaw()));
-		ServerPlayNetworking.registerGlobalReceiver(Net.SuperPayload.TYPE, (payload, ctx) -> useSuper(ctx.player(), payload.yaw()));
+		ServerPlayNetworking.registerGlobalReceiver(Net.AttackPayload.TYPE, (payload, ctx) -> attack(ctx.player(), payload.yaw(), payload.dist()));
+		ServerPlayNetworking.registerGlobalReceiver(Net.SuperPayload.TYPE, (payload, ctx) -> useSuper(ctx.player(), payload.yaw(), payload.dist()));
 	}
 
 	public static BrawlerDef get(String id) {
@@ -65,13 +65,18 @@ public final class Brawlers {
 
 	public static List<BrawlerDef> all() { return List.copyOf(DEFS.values()); }
 
+	private static float cleanDist(float d) { return Float.isNaN(d) || d <= 0f ? 0f : Math.min(d, 64f); }
+
 	/** 試合中で生きている参加者の状態。そうでなければ null。 */
 	private static BrawlState activeState(LivingEntity e) {
 		BrawlState st = Combat.state(e);
 		return st != null && st.alive && !e.isRemoved() ? st : null;
 	}
 
-	public static boolean attack(LivingEntity user, float yawDeg) {
+	public static boolean attack(LivingEntity user, float yawDeg) { return attack(user, yawDeg, 0f); }
+
+	/** aimDist: 照準点までの水平距離（ブロック）。0 以下・非数なら不明（正面の最寄りの敵で決める）。 */
+	public static boolean attack(LivingEntity user, float yawDeg, float aimDist) {
 		if (user == null || !(user.level() instanceof ServerLevel lvl)) return false;
 		if (com.amaguri.brawl.mode.Showdown.running() && !com.amaguri.brawl.mode.Showdown.playing()) return false;
 		BrawlState st = activeState(user);
@@ -85,11 +90,13 @@ public final class Brawlers {
 		if (!Combat.consumeAmmo(user)) return false;
 		user.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
 		LAST_ATTACK.put(user.getUUID(), now);
-		Attacks.normal(lvl, user, def.id(), yawDeg);
+		Attacks.normal(lvl, user, def.id(), yawDeg, cleanDist(aimDist));
 		return true;
 	}
 
-	public static boolean useSuper(LivingEntity user, float yawDeg) {
+	public static boolean useSuper(LivingEntity user, float yawDeg) { return useSuper(user, yawDeg, 0f); }
+
+	public static boolean useSuper(LivingEntity user, float yawDeg, float aimDist) {
 		if (user == null || !(user.level() instanceof ServerLevel lvl)) return false;
 		if (com.amaguri.brawl.mode.Showdown.running() && !com.amaguri.brawl.mode.Showdown.playing()) return false;
 		BrawlState st = activeState(user);
@@ -98,7 +105,7 @@ public final class Brawlers {
 		if (def == null) return false;
 		if (!Combat.canAct(user)) return false; // スタン・凍結・溜め中は必殺も不可
 		if (!Combat.consumeSuper(user)) return false;
-		Attacks.superMove(lvl, user, def.id(), yawDeg);
+		Attacks.superMove(lvl, user, def.id(), yawDeg, cleanDist(aimDist));
 		return true;
 	}
 
