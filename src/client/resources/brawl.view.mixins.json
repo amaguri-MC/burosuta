@@ -8,7 +8,8 @@
 		"MouseHandlerMixin",
 		"ViewMinecraftMixin",
 		"HandHideMixin",
-		"TopDownCullMixin"
+		"TopDownCullMixin",
+		"TopDownFrustumMixin"
 	],
 	"injectors": { "defaultRequire": 1 }
 }
