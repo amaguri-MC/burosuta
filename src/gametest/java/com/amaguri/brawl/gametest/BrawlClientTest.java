@@ -32,6 +32,17 @@ public class BrawlClientTest implements FabricClientGameTest {
 			server.runCommand("time set noon");
 			server.runCommand("weather clear");
 
+			// --- ロビー（入った直後はロビー。見下ろし視点）・キャラ選択画面 ---
+			context.waitTicks(60);
+			sp.getConnection().waitForChunksRender();
+			context.takeScreenshot(TestScreenshotOptions.of("lobby_topdown").disableCounterPrefix());
+			server.runOnServer(ms -> net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(
+					ms.getPlayerList().getPlayers().get(0), new com.amaguri.brawl.api.Net.OpenSelectPayload("mimosa")));
+			context.waitTicks(40);
+			context.takeScreenshot(TestScreenshotOptions.of("select_screen").disableCounterPrefix());
+			context.runOnClient(c -> c.setScreen(null));
+			context.waitTicks(5);
+
 			// --- キャラ5人の並び（試合の外。ボットを置いて正面・背面・自分の三人称） ---
 			server.runCommand("fill -2 150 -2 18 150 18 minecraft:smooth_stone");
 			server.runCommand("tp @a 8 151 1 0 15");
@@ -87,6 +98,17 @@ public class BrawlClientTest implements FabricClientGameTest {
 
 			server.runCommand("brawl stop");
 			context.waitTicks(20);
+			// --- 結果画面（試合終了時に送られるものを模擬） ---
+			server.runOnServer(ms -> net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(
+					ms.getPlayerList().getPlayers().get(0), new com.amaguri.brawl.api.Net.ResultPayload(1, 10, 10, 130,
+							new String[] {"Player", "ボット1", "ボット2", "ボット3"},
+							new String[] {"rusty", "kaden", "gouen", "mimosa"}, new int[] {1, 2, 3, 4})));
+			context.waitTicks(30);
+			context.takeScreenshot(TestScreenshotOptions.of("result_screen").disableCounterPrefix());
+			context.runOnClient(c -> c.setScreen(null));
+			context.waitTicks(40);
+			sp.getConnection().waitForChunksRender();
+			context.takeScreenshot(TestScreenshotOptions.of("lobby_after").disableCounterPrefix());
 		}
 	}
 }
