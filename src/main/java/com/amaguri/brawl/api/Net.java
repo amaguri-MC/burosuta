@@ -175,6 +175,18 @@ public final class Net {
 		@Override public Type<PickPayload> type() { return TYPE; }
 	}
 
+	/**
+	 * S2C 状態異常（core が 2tick ごとに試合/ロビーの参加者全員へ。受け手の48ブロック以内で何か付いている実体だけ）。
+	 * flags: bit0=スタン bit1=凍結 bit2=減速 bit3=氷の床の上。frost: 凍結ゲージ 0〜100。
+	 */
+	public record StatusPayload(int[] ids, int[] flags, int[] frost) implements CustomPacketPayload {
+		public static final Type<StatusPayload> TYPE = typeOf("status");
+		public static final StreamCodec<RegistryFriendlyByteBuf, StatusPayload> CODEC = StreamCodec.of(
+				(b, p) -> { b.writeVarIntArray(p.ids); b.writeVarIntArray(p.flags); b.writeVarIntArray(p.frost); },
+				b -> new StatusPayload(b.readVarIntArray(), b.readVarIntArray(), b.readVarIntArray()));
+		@Override public Type<StatusPayload> type() { return TYPE; }
+	}
+
 	/** BrawlMod.onInitialize の最初に1回だけ呼ぶ（司令塔）。 */
 	public static void registerTypes() {
 		PayloadTypeRegistry.clientboundPlay().register(HudPayload.TYPE, HudPayload.CODEC);
@@ -182,6 +194,7 @@ public final class Net {
 		PayloadTypeRegistry.clientboundPlay().register(HiddenPayload.TYPE, HiddenPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(BarsPayload.TYPE, BarsPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(LooksPayload.TYPE, LooksPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(StatusPayload.TYPE, StatusPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(KillFeedPayload.TYPE, KillFeedPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ResultPayload.TYPE, ResultPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(LobbyPayload.TYPE, LobbyPayload.CODEC);
