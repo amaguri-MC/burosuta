@@ -72,6 +72,34 @@ public class BrawlClientTest implements FabricClientGameTest {
 			server.runCommand("execute as @a at @s run tp @s ~ ~ ~16");
 			context.waitTicks(10);
 
+			// --- FV: 3体（ウィザースケルトン/ウィッチ/ブレイズ）を、バニラの同じモブの隣に置いて近くで撮る（正面・横） ---
+			context.runOnClient(c -> com.amaguri.brawl.client.view.TopDown.enabled = false);
+			server.runOnServer(ms -> {
+				net.minecraft.server.level.ServerPlayer pl = ms.getPlayerList().getPlayers().get(0);
+				net.minecraft.server.level.ServerLevel lvl = (net.minecraft.server.level.ServerLevel) pl.level();
+				String[] ids = {"edgar", "barley", "mimosa"};
+				for (int i = 0; i < ids.length; i++) {
+					com.amaguri.brawl.bot.BrawlBot b = com.amaguri.brawl.bot.BrawlBot.spawn(lvl,
+							pl.position().add(-4.5 + i * 3.2, 0, -5), ids[i], ids[i]);
+					if (b == null) continue;
+					b.setNoAi(true);
+					b.addTag("fvt");
+					b.setYRot(0f); b.setYHeadRot(0f); b.setYBodyRot(0f);
+				}
+			});
+			server.runCommand("execute as @a at @s run summon minecraft:wither_skeleton ~-3 ~ ~-5 {NoAI:1b,Rotation:[0f,0f],Tags:[\"fvt\"],PersistenceRequired:1b}");
+			server.runCommand("execute as @a at @s run summon minecraft:witch ~0.2 ~ ~-5 {NoAI:1b,Rotation:[0f,0f],Tags:[\"fvt\"],PersistenceRequired:1b}");
+			server.runCommand("execute as @a at @s run summon minecraft:blaze ~3.4 ~ ~-5 {NoAI:1b,Rotation:[0f,0f],Tags:[\"fvt\"],PersistenceRequired:1b}");
+			server.runCommand("execute as @a at @s run tp @s ~ ~ ~ 180 8");
+			context.waitTicks(40);
+			context.takeScreenshot(TestScreenshotOptions.of("fv_front").disableCounterPrefix());
+			server.runCommand("execute as @e[tag=fvt] run rotate @s 90 0");
+			context.waitTicks(20);
+			context.takeScreenshot(TestScreenshotOptions.of("fv_side").disableCounterPrefix());
+			server.runCommand("kill @e[tag=fvt]");
+			context.runOnClient(c -> com.amaguri.brawl.client.view.TopDown.enabled = true);
+			context.waitTicks(5);
+
 			server.runCommand("brawl start 9");
 			// 3秒カウントダウンが明けてから 3秒後
 			context.waitTicks(COUNTDOWN_TICKS + 60);
