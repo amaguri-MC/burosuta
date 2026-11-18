@@ -72,8 +72,11 @@ public class BrawlClientTest implements FabricClientGameTest {
 			server.runCommand("execute as @a at @s run tp @s ~ ~ ~16");
 			context.waitTicks(10);
 
-			// --- FV: 3体（ウィザースケルトン/ウィッチ/ブレイズ）を、バニラの同じモブの隣に置いて近くで撮る（正面・横） ---
+			// --- FV: 3体（ウィザースケルトン/ウィッチ/ブレイズ）を、バニラの同じモブの隣に置いて近くで撮る（正面・横）。他のモブが写らないよう上空の台に置く ---
 			context.runOnClient(c -> com.amaguri.brawl.client.view.TopDown.enabled = false);
+			server.runCommand("execute as @a at @s run fill ~-8 ~29 ~-12 ~8 ~29 ~3 minecraft:white_concrete");
+			server.runCommand("execute as @a at @s run tp @s ~ ~30 ~ 180 8");
+			context.waitTicks(10);
 			server.runOnServer(ms -> {
 				net.minecraft.server.level.ServerPlayer pl = ms.getPlayerList().getPlayers().get(0);
 				net.minecraft.server.level.ServerLevel lvl = (net.minecraft.server.level.ServerLevel) pl.level();
@@ -90,13 +93,13 @@ public class BrawlClientTest implements FabricClientGameTest {
 			server.runCommand("execute as @a at @s run summon minecraft:wither_skeleton ~-3 ~ ~-5 {NoAI:1b,Rotation:[0f,0f],Tags:[\"fvt\"],PersistenceRequired:1b}");
 			server.runCommand("execute as @a at @s run summon minecraft:witch ~0.2 ~ ~-5 {NoAI:1b,Rotation:[0f,0f],Tags:[\"fvt\"],PersistenceRequired:1b}");
 			server.runCommand("execute as @a at @s run summon minecraft:blaze ~3.4 ~ ~-5 {NoAI:1b,Rotation:[0f,0f],Tags:[\"fvt\"],PersistenceRequired:1b}");
-			server.runCommand("execute as @a at @s run tp @s ~ ~ ~ 180 8");
 			context.waitTicks(40);
 			context.takeScreenshot(TestScreenshotOptions.of("fv_front").disableCounterPrefix());
 			server.runCommand("execute as @e[tag=fvt] run rotate @s 90 0");
 			context.waitTicks(20);
 			context.takeScreenshot(TestScreenshotOptions.of("fv_side").disableCounterPrefix());
 			server.runCommand("kill @e[tag=fvt]");
+			server.runCommand("execute as @a at @s run tp @s ~ ~-30 ~");
 			context.runOnClient(c -> com.amaguri.brawl.client.view.TopDown.enabled = true);
 			context.waitTicks(5);
 

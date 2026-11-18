@@ -45,7 +45,7 @@ public final class SelectScreen extends Screen {
 	private float dragYaw = 0f;
 
 	// レイアウト（init で計算）
-	private int ts, listX, listY, panelX, panelW, modelX0, modelX1, btnX, btnY, btnW = 112, btnH = 26;
+	private int ts, cols = 2, listX, listW, listH, scroll = 0, listBottom,  listY, panelX, panelW, modelX0, modelX1, btnX, btnY, btnW = 112, btnH = 26;
 	private static final int PANEL_W = 164;
 
 	/** 3D表示用の Model.Simple（モデルが作り直されたら作り直す）。 */
@@ -66,11 +66,17 @@ public final class SelectScreen extends Screen {
 
 	@Override
 	protected void init() {
-		ts = Mth.clamp((this.height - 36) / 5 - 4, 20, 36);
+		// 顔の一覧は2列の格子。全員が入る大きさにし（入りきらないほど低い画面ならマウスホイールでスクロール）
+		int rows = (defs.size() + cols - 1) / cols;
 		listX = 10; listY = 26;
+		listBottom = this.height - 8;
+		ts = Mth.clamp((listBottom - listY) / Math.max(1, rows) - 6, 20, 36);
+		listW = cols * (ts + 6);
+		listH = listBottom - listY;
+		scroll = Mth.clamp(scroll, 0, maxScroll());
 		panelW = PANEL_W;
 		panelX = this.width - panelW - 8;
-		modelX0 = listX + ts + 14;
+		modelX0 = listX + listW + 10;
 		modelX1 = panelX - 8;
 		btnX = (modelX0 + modelX1) / 2 - btnW / 2;
 		btnY = this.height - 34;
@@ -84,6 +90,10 @@ public final class SelectScreen extends Screen {
 	private void select(int i) {
 		if (i < 0 || i >= defs.size() || i == sel) return;
 		sel = i; switchAge = 0; dragYaw = 0f;
+		int top = listY + (i / cols) * (ts + 6); // 選んだ顔が見える所までスクロール
+		if (top - scroll < listY) scroll = top - listY;
+		else if (top + ts + 6 - scroll > listBottom) scroll = top + ts + 6 - listBottom;
+		scroll = Mth.clamp(scroll, 0, maxScroll());
 		click(1.3f);
 	}
 
@@ -100,13 +110,28 @@ public final class SelectScreen extends Screen {
 
 	// ---- 入力 ----
 
-	private int tileY(int i) { return listY + i * (ts + 4); }
+	private int tileX(int i) { return listX + (i % cols) * (ts + 6); }
+	private int tileY(int i) { return listY + (i / cols) * (ts + 6) - scroll; }
+	private int maxScroll() {
+		int rows = (defs.size() + cols - 1) / cols;
+		return Math.max(0, rows * (ts + 6) - listH);
+	}
+	private boolean inList(double mx, double my) { return Ui.in(mx, my, listX - 4, listY - 4, listW + 4, listH + 4); }
+
+	@Override
+	public boolean mouseScrolled(double mx, double my, double sx, double sy) {
+		if (maxScroll() > 0 && inList(mx, my)) {
+			scroll = Mth.clamp(scroll - (int) Math.signum(sy) * (ts + 6), 0, maxScroll());
+			return true;
+		}
+		return super.mouseScrolled(mx, my, sx, sy);
+	}
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent e, boolean dbl) {
 		if (e.button() != 0) return super.mouseClicked(e, dbl);
 		for (int i = 0; i < defs.size(); i++) {
-			if (Ui.in(e.x(), e.y(), listX - 3, tileY(i) - 3, ts + 6, ts + 6)) { select(i); return true; }
+			if (inList(e.x(), e.y()) && Ui.in(e.x(), e.y(), tileX(i) - 3, tileY(i) - 3, ts + 6, ts + 6)) { select(i); return true; }
 		}
 		if (Ui.in(e.x(), e.y(), btnX, btnY, btnW, btnH)) { pick(); return true; }
 		return super.mouseClicked(e, dbl);
@@ -123,8 +148,10 @@ public final class SelectScreen extends Screen {
 		int k = e.key();
 		if (k == Ui.KEY_ESC || k == Ui.KEY_B) { onClose(); return true; }
 		if (k == Ui.KEY_ENTER) { pick(); return true; }
-		if (k == Ui.KEY_UP || k == Ui.KEY_LEFT) { select(sel - 1); return true; }
-		if (k == Ui.KEY_DOWN || k == Ui.KEY_RIGHT) { select(sel + 1); return true; }
+		if (k == Ui.KEY_LEFT) { select(sel - 1); return true; }
+		if (k == Ui.KEY_UP) { select(sel - cols); return true; }
+		if (k == Ui.KEY_RIGHT) { select(sel + 1); return true; }
+		if (k == Ui.KEY_DOWN) { select(sel + cols); return true; }
 		return super.keyPressed(e);
 	}
 
@@ -158,16 +185,18 @@ public final class SelectScreen extends Screen {
 		Ui.text(g, this.font, Ui.t("brawl.select.title"), 18, 8, 1f, Ui.WHITE, Ui.YELLOW_EDGE, Ui.LEFT);
 
 		// 左: 顔の一覧
+		g.enableScissor(0, listY - 6, listX + listW + 4, listBottom + 4);
 		for (int i = 0; i < defs.size(); i++) {
 			String bid = defs.get(i).id();
-			int y = tileY(i);
-			boolean on = i == sel, hover = Ui.in(mx, my, listX - 3, y - 3, ts + 6, ts + 6);
-			if (on) Ui.box(g, listX - 3, y - 3, ts + 6, ts + 6, Ui.YELLOW, Ui.NAVY_EDGE, 2);
-			else Ui.box(g, listX - 2, y - 2, ts + 4, ts + 4, hover ? Ui.NAVY_LIGHT : Ui.NAVY, Ui.NAVY_EDGE, 2);
-			g.fill(listX, y, listX + ts, y + ts, on ? Ui.NAVY_LIGHT : Ui.NAVY);
-			Faces.draw(g, bid, listX, y, ts);
-			if (bid.equals(current)) Ui.icon(g, "star", listX + ts - 9, y - 4, 12); // いま使っているキャラ
+			int x = tileX(i), y = tileY(i);
+			boolean on = i == sel, hover = inList(mx, my) && Ui.in(mx, my, x - 3, y - 3, ts + 6, ts + 6);
+			if (on) Ui.box(g, x - 3, y - 3, ts + 6, ts + 6, Ui.YELLOW, Ui.NAVY_EDGE, 2);
+			else Ui.box(g, x - 2, y - 2, ts + 4, ts + 4, hover ? Ui.NAVY_LIGHT : Ui.NAVY, Ui.NAVY_EDGE, 2);
+			g.fill(x, y, x + ts, y + ts, on ? Ui.NAVY_LIGHT : Ui.NAVY);
+			Faces.draw(g, bid, x, y, ts);
+			if (bid.equals(current)) Ui.icon(g, "star", x + ts - 9, y - 4, 12); // いま使っているキャラ
 		}
+		g.disableScissor();
 
 		// 中央: 3Dモデル（ゆっくり回転）と台座
 		int mcx = (modelX0 + modelX1) / 2;
