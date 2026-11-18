@@ -22,7 +22,7 @@ import net.minecraft.world.phys.Vec3;
 public final class Boxes {
 	private Boxes() {}
 
-	static final int BOX_HP = 4000;
+	static final int BOX_HP = 6000;
 
 	/** 箱の北西下角（boxTiles の要素）→ 残りHP。まだ殴られていない箱は載らない（=満タン）。 */
 	private static final Map<Long, Integer> HP = new HashMap<>();
