@@ -168,3 +168,15 @@ public final class BotClient { public static void init(); } // client 側。プ�
 - `MatchHooks.canHit(attacker, victim)` が false ならダメージは通らない（練習場のルールに L が使う）
 - ステータス（トロフィー・勝利数・選択キャラ）は L がサーバーの config/brawl_stats.json に保存
 - `client/hud/HudState`（U）: payload の受信は U だけが登録し、`public static Net.HudPayload hud`（試合外 null）, `public static Net.MatchPayload match`, `public static Net.LobbyPayload lobby`（ロビー外 null）を持つ。V はこれを読むだけ
+
+---
+# 第3弾（モブの見た目・ニタ/バーリー追加・専用描画のガイド）
+- キャラの見た目は「バニラのモブ」。id→モブ: rusty→PILLAGER, kaden→SKELETON, gouen→HOGLIN, mimosa→BLAZE, takomaru→IRON_GOLEM, nita→POLAR_BEAR, barley→WITCH。ニタの相棒 `nitabear` は自作モデル（assets/brawl/models/brawler/nitabear.json）
+- 名前は「モブ名（役割）」: 襲撃者（ショットガン）/ スケルトン（ガンマン）/ ホグリン（突進タンク）/ ブレイズ（ロケット）/ アイアンゴーレム（格闘）/ シロクマ（クマ使い）/ ウィッチ（投てき）。内部 id はそのまま
+- 全員 見た目の高さを約1.9ブロックに揃える（当たり判定はプレイヤーと同じ）
+- BarsPayload.team: 0=自分 1=敵 2=味方（自分の召喚物）
+| 担当 | 範囲 |
+|---|---|
+| MOB | client/model/**（描画の振り分け・モブ人形）, client/hud/Faces.java, client/select/**（3D表示） |
+| NB | brawler/**, core/**（召喚の味方判定）, bot/BrawlBot.java（相棒クマの思考）, src/client/resources/assets/brawl/models/brawler/nitabear.json と textures/entity/brawler/nitabear.png, 言語 |
+| G | client/view/TopDownClient.java の guide 部分, client/world/**（新規） |
