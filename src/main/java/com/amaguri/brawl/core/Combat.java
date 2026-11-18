@@ -283,7 +283,7 @@ public final class Combat {
 		BrawlState st = state(e);
 		if (st == null || !st.alive || st.ownerId != null) return; // 召喚物は拾えない
 		st.cubes++;
-		st.hp = Math.min(st.maxHp(), st.hp + 400);
+		st.hp = Math.min(st.maxHp(), st.hp + st.cubeHp());
 	}
 
 	public static void knockback(LivingEntity e, Vec3 dirUnit, double blocks) {

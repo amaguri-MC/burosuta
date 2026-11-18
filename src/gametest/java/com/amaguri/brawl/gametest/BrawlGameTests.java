@@ -39,6 +39,9 @@ public class BrawlGameTests {
 	private static final int FLOOR_BOX = 80;
 	private static final int FLOOR_BUSH = 100;
 	private static final int FLOOR_ELIM = 120;
+	/** 長い走路（他のテストの舞台と干渉しないよう専用の高さ）。 */
+	private static final int FLOOR_RUN = 160;
+	private static final int RUN_LEN = 60;
 
 	/** 床は石、周りと天井はガラス、中は空気。立つ高さは floor+1。 */
 	private static void buildStage(GameTestHelper h, int floor) {
@@ -263,7 +266,7 @@ public class BrawlGameTests {
 			if (s.cubes == 1) {
 				int max = s.maxHp();
 				cleanup(picker);
-				h.assertTrue(max == baseMax + 400, "キューブ1個で最大HPが +400 になるはず: " + max + " (基準 " + baseMax + ")");
+				h.assertTrue(max == baseMax + Math.round(baseMax * 0.1f), "キューブ1個で最大HPが +10% になるはず: " + max + " (基準 " + baseMax + ")");
 				h.succeed();
 			} else if (t > 200) {
 				cleanup(picker);
@@ -341,6 +344,59 @@ public class BrawlGameTests {
 			h.assertTrue(who == victim, "onEliminated に倒れた本人が渡るはず");
 			h.assertFalse(alive, "倒れたら alive=false のはず");
 			h.succeed();
+		});
+	}
+
+	// ---- 8. ボットの実測速度が キャラの速さ（タイル/秒 × 2）と ±10% で一致する ----
+
+	@GameTest(maxTicks = 220)
+	public void botWalkSpeedMatchesBrawlerSpeed(GameTestHelper h) {
+		final int f = FLOOR_RUN;
+		final int w = 7;
+		BlockPos ca = h.absolutePos(new BlockPos(0, f, 0));
+		BlockPos cb = h.absolutePos(new BlockPos(w - 1, f, RUN_LEN - 1));
+		for (int cx = (ca.getX() >> 4) - 1; cx <= (cb.getX() >> 4) + 1; cx++) {
+			for (int cz = (ca.getZ() >> 4) - 1; cz <= (cb.getZ() >> 4) + 1; cz++) {
+				h.getLevel().setChunkForced(cx, cz, true);
+			}
+		}
+		for (int x = 0; x < w; x++) {
+			for (int y = 0; y < H; y++) {
+				for (int z = 0; z < RUN_LEN; z++) {
+					boolean edge = x == 0 || x == w - 1 || z == 0 || z == RUN_LEN - 1 || y == H - 1;
+					h.setBlock(x, f + y, z, y == 0 ? Blocks.STONE : edge ? Blocks.GLASS : Blocks.AIR);
+				}
+			}
+		}
+		final String id = "rusty";
+		final double expect = Brawlers.get(id).speedTiles() * 2.0; // ブロック/秒
+		// 相棒（召喚物）は敵も主もいなければ AI が歩かないので、走らせる実体にする。主は走路の奥に置く
+		BrawlBot owner = bot(h, f, 3.5, RUN_LEN - 3.5, id, "Owner");
+		BrawlBot runner = BrawlBot.spawnSummon(h.getLevel(), h.absoluteVec(new Vec3(3.5, f + 1, 3.5)), id, "Runner", owner);
+		h.assertTrue(runner != null && Combat.state(runner) != null, "走らせるボットが作れない");
+		final Vec3 goal = h.absoluteVec(new Vec3(3.5, f + 1, 33.5)); // 30 ブロック先
+		final double[] z = new double[11];
+		h.onEachTick(() -> {
+			long t = h.getTick();
+			if (t == 1) {
+				runner.getNavigation().moveTo(goal.x, goal.y, goal.z, 1.0);
+			}
+			if (t >= 1 && (t - 1) % 20 == 0 && (t - 1) / 20 < z.length) {
+				int i = (int) ((t - 1) / 20);
+				z[i] = runner.getZ();
+				System.out.println("[BOTSPEED] t=" + t + " z=" + runner.getZ() + " x=" + runner.getX());
+			}
+			if (t == 1 + 20 * 5) {
+				// 2〜5秒目の平均（加速の立ち上がりを除く）
+				double bps = (z[5] - z[1]) / 4.0;
+				double ratio = bps / expect;
+				System.out.println("[BOTSPEED] measured=" + bps + " b/s expect=" + expect + " ratio=" + ratio
+						+ " attr=" + runner.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED));
+				cleanup(runner, owner);
+				h.assertTrue(Math.abs(ratio - 1.0) <= 0.10,
+						"ボットの実測速度が キャラの速さと ±10% で一致しない: 実測 " + bps + " b/s / 期待 " + expect + " b/s");
+				h.succeed();
+			}
 		});
 	}
 }

@@ -3,6 +3,7 @@ package com.amaguri.brawl.core;
 import java.util.UUID;
 
 import com.amaguri.brawl.brawler.BrawlerDef;
+import com.amaguri.brawl.brawler.BrawlerStats;
 import com.amaguri.brawl.brawler.Brawlers;
 
 /** 試合参加者1人ぶんの状態（プレイヤーもボットも同じ）。サーバースレッド専用。 */
@@ -48,11 +49,18 @@ public final class BrawlState {
 		this.brawlerId = brawlerId;
 	}
 
-	/** def.maxHp + 400*cubes */
+	/** キューブ1個ぶんの最大HP（そのキャラのパワー11の最大HPの10%）。 */
+	public int cubeHp() {
+		BrawlerDef d = Brawlers.get(brawlerId);
+		int base = d != null ? d.maxHp() : BrawlerStats.p(3000);
+		return Math.round(base * 0.1f);
+	}
+
+	/** def.maxHp（パワー11）+ 10% * cubes */
 	public int maxHp() {
 		BrawlerDef d = Brawlers.get(brawlerId);
-		int base = d != null ? d.maxHp() : 3000;
-		return base + 400 * cubes;
+		int base = d != null ? d.maxHp() : BrawlerStats.p(3000);
+		return base + cubeHp() * cubes;
 	}
 
 	/** 1 + 0.1*cubes */
