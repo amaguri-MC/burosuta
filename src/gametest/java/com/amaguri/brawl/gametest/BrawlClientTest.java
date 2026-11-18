@@ -43,33 +43,23 @@ public class BrawlClientTest implements FabricClientGameTest {
 			context.runOnClient(c -> c.gui.setScreen(null));
 			context.waitTicks(5);
 
-			// --- キャラ5人の並び（試合の外。ボットを置いて正面・背面・自分の三人称） ---
-			server.runCommand("fill -2 150 -2 18 150 18 minecraft:smooth_stone");
-			server.runCommand("tp @a 8 151 1 0 15");
+			// --- キャラ7人の並び（ロビーの中、プレイヤーの北側に一列。見下ろし視点で撮る） ---
 			server.runOnServer(ms -> {
 				net.minecraft.server.level.ServerPlayer pl = ms.getPlayerList().getPlayers().get(0);
 				net.minecraft.server.level.ServerLevel lvl = (net.minecraft.server.level.ServerLevel) pl.level();
-				String[] ids = {"rusty", "kaden", "gouen", "mimosa", "takomaru"};
+				String[] ids = {"rusty", "kaden", "gouen", "mimosa", "takomaru", "nita", "barley"};
 				for (int i = 0; i < ids.length; i++) {
 					com.amaguri.brawl.bot.BrawlBot b = com.amaguri.brawl.bot.BrawlBot.spawn(lvl,
-							new net.minecraft.world.phys.Vec3(2.5 + i * 3, 151, 7.5), ids[i], ids[i]);
+							pl.position().add(-6 + i * 2, 0, -4), ids[i], ids[i]);
 					if (b == null) continue;
 					b.setNoAi(true);
-					b.setYRot(180f); b.setYHeadRot(180f); b.setYBodyRot(180f);
+					b.setYRot(0f); b.setYHeadRot(0f); b.setYBodyRot(0f);
 				}
 			});
 			context.waitTicks(50);
-			sp.getConnection().waitForChunksRender();
-			context.takeScreenshot(TestScreenshotOptions.of("lineup_front").disableCounterPrefix());
-			server.runCommand("tp @a 8 151 14 180 15");
-			context.waitTicks(10);
-			context.takeScreenshot(TestScreenshotOptions.of("lineup_back").disableCounterPrefix());
-			server.runOnServer(ms -> com.amaguri.brawl.core.Combat.join(ms.getPlayerList().getPlayers().get(0), "kaden"));
-			context.runOnClient(c -> c.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT));
-			context.waitTicks(30);
-			context.takeScreenshot(TestScreenshotOptions.of("self_front").disableCounterPrefix());
-			context.runOnClient(c -> c.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON));
-			server.runOnServer(ms -> com.amaguri.brawl.core.Combat.leave(ms.getPlayerList().getPlayers().get(0)));
+			context.takeScreenshot(TestScreenshotOptions.of("lineup_lobby").disableCounterPrefix());
+			server.runCommand("kill @e[type=brawl:brawl_bot,tag=!brawl_lobby]");
+			context.waitTicks(5);
 
 			server.runCommand("brawl start 9");
 			// 3秒カウントダウンが明けてから 3秒後
