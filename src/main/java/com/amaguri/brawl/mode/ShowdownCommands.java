@@ -20,8 +20,9 @@ import com.amaguri.brawl.arena.ArenaMap;
 import com.amaguri.brawl.bot.BrawlBot;
 import com.amaguri.brawl.brawler.BrawlerDef;
 import com.amaguri.brawl.brawler.Brawlers;
+import com.amaguri.brawl.lobby.Lobby;
 
-/** /brawl [pick <id> | start [ボット数] | stop | setlobby | bots <easy|normal|hard> | map] */
+/** /brawl [pick <id> | start [ボット数] | stop | setlobby | lobby | bots <easy|normal|hard> | map] */
 final class ShowdownCommands {
 	private ShowdownCommands() {}
 
@@ -50,6 +51,9 @@ final class ShowdownCommands {
 				.then(Commands.literal("setlobby")
 						.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 						.executes(ShowdownCommands::setLobby))
+				.then(Commands.literal("lobby")
+						.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+						.executes(ShowdownCommands::buildLobby))
 				.then(Commands.literal("bots")
 						.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 						.then(Commands.argument("level", StringArgumentType.word())
@@ -68,7 +72,7 @@ final class ShowdownCommands {
 	private static int list(CommandContext<CommandSourceStack> ctx) {
 		CommandSourceStack src = ctx.getSource();
 		ServerPlayer p = src.getPlayer();
-		String cur = p == null ? null : Showdown.picked(p.getUUID());
+		String cur = p == null ? null : Lobby.selected(p);
 		MutableComponent msg = Msg.t("brawl.mode.list_head", "キャラを選んでください（クリックで選択）").withStyle(ChatFormatting.YELLOW);
 		for (BrawlerDef def : Brawlers.all()) {
 			MutableComponent btn = Component.literal("[" + def.nameJa() + "]")
@@ -77,7 +81,7 @@ final class ShowdownCommands {
 							.withHoverEvent(new HoverEvent.ShowText(Component.literal(def.roleJa()))));
 			msg.append("\n ").append(btn).append(Component.literal(" " + def.roleJa()).withStyle(ChatFormatting.GRAY));
 		}
-		msg.append("\n").append(Msg.t("brawl.mode.list_foot", "選ばないとランダムになります").withStyle(ChatFormatting.DARK_GRAY));
+		msg.append("\n").append(Msg.t("brawl.mode.list_foot", "ロビーの像を右クリックしても選べます").withStyle(ChatFormatting.DARK_GRAY));
 		src.sendSystemMessage(msg);
 		return 1;
 	}
@@ -90,8 +94,10 @@ final class ShowdownCommands {
 			src.sendFailure(Msg.t("brawl.mode.pick_unknown", "そのキャラはいません: %s", id));
 			return 0;
 		}
-		Showdown.pick(p.getUUID(), def.id());
-		src.sendSuccess(() -> Msg.t("brawl.mode.pick_ok", "%sを選びました", def.nameJa()), false);
+		if (!Lobby.pick(p, def.id())) {          // 保存・練習のキャラ切り替え・「〇〇を選んだ！」は Lobby が行う
+			src.sendFailure(Msg.t("brawl.mode.pick_busy", "試合中はキャラを変えられません"));
+			return 0;
+		}
 		return 1;
 	}
 
@@ -119,8 +125,22 @@ final class ShowdownCommands {
 	private static int setLobby(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
 		CommandSourceStack src = ctx.getSource();
 		ServerPlayer p = src.getPlayerOrException();
-		Lobby.set(p);
-		src.sendSuccess(() -> Msg.t("brawl.mode.lobby_set", "ロビーをここに設定しました"), true);
+		Lobby.setSpawn(p);
+		src.sendSuccess(() -> Msg.t("brawl.mode.lobby_set", "ロビーのスポーンをここに設定しました"), true);
+		return 1;
+	}
+
+	private static int buildLobby(CommandContext<CommandSourceStack> ctx) {
+		CommandSourceStack src = ctx.getSource();
+		if (Showdown.running()) {
+			src.sendFailure(Msg.t("brawl.mode.busy", "試合中はマップを建てられません"));
+			return 0;
+		}
+		if (!Lobby.build(src.getServer())) {
+			src.sendFailure(Msg.t("brawl.lobby.build_failed", "ロビーを建てられませんでした（ログを確認してください）"));
+			return 0;
+		}
+		src.sendSuccess(() -> Msg.t("brawl.lobby.built", "ロビーを建てて、像とカカシを置き直しました"), true);
 		return 1;
 	}
 

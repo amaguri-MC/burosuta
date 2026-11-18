@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,7 +36,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -50,6 +50,8 @@ import com.amaguri.brawl.brawler.Brawlers;
 import com.amaguri.brawl.core.BrawlState;
 import com.amaguri.brawl.core.Combat;
 import com.amaguri.brawl.core.MatchHooks;
+import com.amaguri.brawl.lobby.Lobby;
+import com.amaguri.brawl.lobby.Stats;
 
 /** バトルロイヤルの進行（カウントダウン→試合→勝利表示→ロビー帰還）。状態は {@link #match} 1つだけ。 */
 public final class Showdown {
@@ -74,12 +76,9 @@ public final class Showdown {
 		float yaw;
 		int rank;                    // 0=未確定
 		boolean eliminated;
-		// プレイヤーの復元用
+		// プレイヤーをロビーへ戻す用
 		boolean prepared;
 		boolean restored;
-		GameType prevMode;
-		ItemStack[] prevInv;
-		int prevSlot;
 
 		Entrant(UUID id, String name, String brawlerId, boolean bot) {
 			this.id = id;
@@ -104,6 +103,8 @@ public final class Showdown {
 		int playTicks;
 		Entrant winner;
 		boolean finished;
+		/** 試合中に入ってきた（または人数オーバーだった）プレイヤー。観戦して、終了後ロビーへ。 */
+		final Set<UUID> watchers = new HashSet<>();
 
 		Match(ServerLevel level, ArenaLayout layout) {
 			this.level = level;
@@ -115,9 +116,9 @@ public final class Showdown {
 	}
 
 	private static Match match;
-	private static final Map<UUID, String> PICKS = new java.util.HashMap<>();
 	private static final Random RNG = new Random();
 	private static boolean inited;
+	private static boolean stopping;
 
 	// ------------------------------------------------------------------ 初期化
 
@@ -127,13 +128,18 @@ public final class Showdown {
 		MatchHooks.onEliminated = Showdown::onEliminated;
 		ServerTickEvents.END_SERVER_TICK.register(Showdown::tick);
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> onDisconnect(server, handler.getPlayer()));
-		ServerLifecycleEvents.SERVER_STOPPING.register(server -> stop(server));
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> stopping = false);
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+			stopping = true;
+			stop(server);
+		});
 		// 試合中の参加者: ブロックの破壊・設置・使用、アイテムの使用は不可
 		PlayerBlockBreakEvents.BEFORE.register((lvl, player, pos, state, be) -> !isMatchPlayer(player));
 		UseBlockCallback.EVENT.register((player, lvl, hand, hit) -> isMatchPlayer(player) ? InteractionResult.FAIL : InteractionResult.PASS);
 		AttackBlockCallback.EVENT.register((player, lvl, hand, pos, dir) -> isMatchPlayer(player) ? InteractionResult.FAIL : InteractionResult.PASS);
 		UseItemCallback.EVENT.register((player, lvl, hand) -> isMatchPlayer(player) ? InteractionResult.FAIL : InteractionResult.PASS);
 		ShowdownCommands.init();
+		Lobby.init();                                // ロビー（広場・像・練習場・準備床・掲示板）
 	}
 
 	public static boolean running() {
@@ -152,14 +158,6 @@ public final class Showdown {
 		return m == null ? null : m.layout;
 	}
 
-	static void pick(UUID id, String brawlerId) {
-		PICKS.put(id, brawlerId);
-	}
-
-	static String picked(UUID id) {
-		return PICKS.get(id);
-	}
-
 	private static boolean isMatchPlayer(Player p) {
 		Match m = match;
 		if (m == null) return false;
@@ -169,10 +167,15 @@ public final class Showdown {
 
 	// ------------------------------------------------------------------ 開始
 
-	/** 試合を始める。失敗なら理由（日本語）を返す。成功は null。 */
+	/** 手動開始（/brawl start）: オンラインの全プレイヤーが参加。失敗なら理由（日本語）を返す。成功は null。 */
 	static String start(MinecraftServer server, Integer botArg) {
+		return start(server, botArg, null);
+	}
+
+	/** 試合を始める。participants=参加するプレイヤー（null=オンラインの全員。最大10人）。失敗なら理由（日本語）、成功は null。 */
+	public static String start(MinecraftServer server, Integer botArg, List<ServerPlayer> participants) {
 		if (match != null) return "すでに試合中です";
-		List<ServerPlayer> players = new ArrayList<>(server.getPlayerList().getPlayers());
+		List<ServerPlayer> players = new ArrayList<>(participants != null ? participants : server.getPlayerList().getPlayers());
 		if (players.size() > TOTAL) players = new ArrayList<>(players.subList(0, TOTAL));
 		int bots = botArg != null ? Math.max(0, botArg) : Math.max(0, TOTAL - players.size());
 		bots = Math.min(bots, TOTAL - players.size());
@@ -181,7 +184,8 @@ public final class Showdown {
 		ServerLevel lvl = server.overworld();
 		Match m = null;
 		try {
-			Combat.clearAll(server);                 // 前の状態の取り残しを消す
+			Lobby.beforeMatch(server);               // カカシを片付ける
+			Combat.clearAll(server);                 // 前の状態の取り残しを消す（練習中の参加状態も）
 			Boxes.reset();
 			ArenaLayout layout = ArenaMap.build(lvl);
 			if (layout == null || layout.spawns().size() < players.size() + bots) {
@@ -192,8 +196,8 @@ public final class Showdown {
 			Gas.reset(layout);
 
 			for (ServerPlayer p : players) {
-				String id = PICKS.get(p.getUUID());
-				if (id == null || Brawlers.get(id) == null) id = randomBrawler();
+				String id = Lobby.selected(p);          // 保存してある選択キャラ（無ければ先頭のキャラ）
+				if (Brawlers.get(id) == null) id = randomBrawler();
 				add(m, new Entrant(p.getUUID(), p.getName().getString(), id, false));
 			}
 			for (int i = 1; i <= bots; i++) {
@@ -229,6 +233,9 @@ public final class Showdown {
 			return "試合の開始に失敗しました: " + ex;
 		}
 		for (Entrant e : m.entrants) m.alive.add(e.id);
+		for (ServerPlayer p : server.getPlayerList().getPlayers()) {   // 参加しない人（人数オーバー）は観戦
+			if (!m.byId.containsKey(p.getUUID())) watch(server, p);
+		}
 		broadcast(m, Msg.t("brawl.mode.start", "バトルロイヤル開始！ 参加 %s人（ボット %s人）", m.entrants.size(), bots).withStyle(ChatFormatting.YELLOW));
 		return null;
 	}
@@ -244,11 +251,6 @@ public final class Showdown {
 	}
 
 	private static void prepare(Match m, Entrant e, ServerPlayer p) {
-		e.prevMode = p.gameMode();
-		var inv = p.getInventory();
-		e.prevInv = new ItemStack[inv.getContainerSize()];
-		for (int i = 0; i < e.prevInv.length; i++) e.prevInv[i] = inv.getItem(i).copy();
-		e.prevSlot = inv.getSelectedSlot();
 		e.prepared = true;
 		p.closeContainer();
 		p.setGameMode(GameType.ADVENTURE);
@@ -410,7 +412,11 @@ public final class Showdown {
 	/** MatchHooks から（Combat.damage の中で）呼ばれる。ここでは記録だけして、演出は次の drain で行う。 */
 	private static void onEliminated(LivingEntity victim, LivingEntity killer) {
 		Match m = match;
-		if (m == null || victim == null) return;
+		if (victim == null) return;
+		if (m == null) {                           // 試合外 = ロビーの練習。カカシは立て直す
+			Lobby.onTrainingEliminated(victim);
+			return;
+		}
 		Entrant v = m.byId.get(victim.getUUID());
 		if (v == null || v.eliminated) return;
 		Entrant k = killer == null ? null : m.byId.get(killer.getUUID());
@@ -450,6 +456,10 @@ public final class Showdown {
 			info = Msg.t("brawl.mode.elim", "%sが脱落（残り%s人）", v.name, m.alive.size());
 		}
 		broadcast(m, info.withStyle(ChatFormatting.GRAY));
+		Net.KillFeedPayload feed = new Net.KillFeedPayload(
+				el.killer() != null ? el.killer().name : "", el.killer() != null ? el.killer().brawlerId : "",
+				v.name, v.brawlerId);
+		for (ServerPlayer sp : server.getPlayerList().getPlayers()) ServerPlayNetworking.send(sp, feed);   // 全員へ（観戦・ロビーの人にも）
 		if (ent == null) return;
 		if (v.bot) {
 			m.level.sendParticles(ParticleTypes.POOF, ent.getX(), ent.getY() + 0.8, ent.getZ(), 12, 0.3, 0.5, 0.3, 0.05);
@@ -489,7 +499,7 @@ public final class Showdown {
 		} catch (RuntimeException ex) {
 			LOG.warn("leave に失敗", ex);
 		}
-		restore(server, e, p);
+		e.restored = true;                         // 切断する人はロビーへ送らない（入り直したら Lobby/watch が扱う）
 		if (match == m && m.phase != Phase.ENDING && m.alive.size() <= 1) finish(server, m);
 	}
 
@@ -518,9 +528,31 @@ public final class Showdown {
 			table.append(Component.literal("\n#" + e.rank + "  " + e.name + "  (" + (def != null ? def.nameJa() : e.brawlerId) + ")")
 					.withStyle(e.rank == 1 ? ChatFormatting.YELLOW : ChatFormatting.WHITE));
 		}
+		// トロフィー（0未満にはしない）と勝利数。ボットは数えない
+		Map<UUID, int[]> trophyOf = new java.util.HashMap<>();   // id → {増減, 合計}
+		for (Entrant e : order) {
+			if (e.bot) continue;
+			Stats.Entry st = Stats.get(e.id, e.name);
+			int old = st.trophies;
+			st.trophies = Math.max(0, old + Stats.delta(e.rank));
+			if (e == m.winner) st.wins++;
+			trophyOf.put(e.id, new int[] {st.trophies - old, st.trophies});
+		}
+		Stats.save();
+		String[] names = new String[order.size()], brawlers = new String[order.size()];
+		int[] ranks = new int[order.size()];
+		for (int i = 0; i < order.size(); i++) {
+			Entrant e = order.get(i);
+			names[i] = e.name;
+			brawlers[i] = e.brawlerId;
+			ranks[i] = e.rank == 0 ? order.size() : e.rank;
+		}
 		for (Entrant e : m.entrants) {
 			ServerPlayer p = player(server, e);
 			if (p == null) continue;
+			int[] tr = trophyOf.getOrDefault(e.id, new int[] {0, 0});
+			ServerPlayNetworking.send(p, new Net.ResultPayload(e.rank == 0 ? order.size() : e.rank, order.size(),
+					tr[0], tr[1], names, brawlers, ranks));
 			Msg.chat(p, table);
 			if (e == m.winner) {
 				Msg.title(p, Msg.t("brawl.mode.win_title", "#1 勝利！").withStyle(ChatFormatting.GOLD), null, 5, 80, 20);
@@ -567,21 +599,38 @@ public final class Showdown {
 		} catch (RuntimeException ex) {
 			LOG.warn("掃除に失敗", ex);
 		}
+		for (UUID id : m.watchers) {                // 観戦していた人もロビーへ
+			ServerPlayer p = server.getPlayerList().getPlayer(id);
+			if (p != null) Lobby.returnToLobby(server, p);
+		}
 		Combat.clearAll(server);
 		m.pending.clear();
+		if (!stopping) Lobby.afterMatch(server);    // カカシを戻す（練習の参加状態はロビーの tick が戻す）
 	}
 
-	/** プレイヤーを元のゲームモード・持ち物にしてロビーへ戻す。1人につき1回だけ。 */
+	/**
+	 * プレイヤーをロビーへ戻す（アドベンチャー・ロビーのスポーン）。1人につき1回だけ。
+	 * 練習中の参加者（Combat.join・武器だけの持ち物）に戻すのは、cleanup の Combat.clearAll のあとにロビーの tick が行う。
+	 */
 	private static void restore(MinecraftServer server, Entrant e, ServerPlayer p) {
 		if (e.restored || !e.prepared) return;
 		e.restored = true;
-		p.setGameMode(e.prevMode);
-		var inv = p.getInventory();
-		inv.clearContent();
-		for (int i = 0; i < e.prevInv.length; i++) inv.setItem(i, e.prevInv[i]);
-		inv.setSelectedSlot(e.prevSlot);
-		Lobby.send(server, p);
-		ServerPlayNetworking.send(p, new Net.MatchPayload(0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+		Lobby.returnToLobby(server, p);
+	}
+
+	/** 試合中に入ってきた人・人数オーバーの人: 観戦（スペクテイター）。終了後にロビーへ戻す。 */
+	public static void watch(MinecraftServer server, ServerPlayer p) {
+		Match m = match;
+		if (m == null || p == null) return;
+		Entrant e = m.byId.get(p.getUUID());
+		if (e != null && !e.restored && !e.bot) return;      // 試合に参加している人は対象外
+		m.watchers.add(p.getUUID());
+		if (Combat.state(p) != null) Combat.leave(p);
+		p.closeContainer();
+		p.setGameMode(GameType.SPECTATOR);
+		Vec3 c = m.layout.center();
+		p.teleportTo(m.level, c.x, c.y + 12, c.z, Set.of(), p.getYRot(), 30f, true);
+		Msg.chat(p, Msg.t("brawl.mode.watching", "試合中です。終わるまで観戦します").withStyle(ChatFormatting.GRAY));
 	}
 
 	// ------------------------------------------------------------------ 通信・補助

@@ -1,0 +1,21 @@
+{
+ "brawl.lobby.pad": "プレイ",
+ "brawl.lobby.pad_sub": "\n全員が乗ると開始",
+ "brawl.lobby.practice": "練習場",
+ "brawl.lobby.practice_sub": "\nカカシを撃とう",
+ "brawl.lobby.board_title": "トロフィー ランキング",
+ "brawl.lobby.picked": "%sを選んだ！",
+ "brawl.lobby.starting": "まもなく開始！",
+ "brawl.lobby.cancel": "準備を中止しました",
+ "brawl.lobby.build_failed": "ロビーを建てられませんでした（ログを確認してください）",
+ "brawl.lobby.built": "ロビーを建てて、像とカカシを置き直しました",
+ "brawl.mode.pick_busy": "試合中はキャラを変えられません",
+ "brawl.mode.watching": "試合中です。終わるまで観戦します",
+ "brawl.mode.lobby_set": "ロビーのスポーンをここに設定しました",
+ "brawl.mode.list_foot": "ロビーの像を右クリックしても選べます",
+ "block.brawl.lobby_tile_a": "ロビーのタイル（クリーム）",
+ "block.brawl.lobby_tile_b": "ロビーのタイル（水色）",
+ "block.brawl.lobby_edge": "ロビーの縁",
+ "block.brawl.lobby_pad": "ロビーのプレイ床",
+ "block.brawl.lobby_pedestal": "ロビーの台座"
+}

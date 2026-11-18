@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "com.amaguri.brawl.client.view.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"CameraMixin",
+		"KeyboardInputMixin",
+		"MouseHandlerMixin",
+		"ViewMinecraftMixin"
+	],
+	"injectors": { "defaultRequire": 1 }
+}

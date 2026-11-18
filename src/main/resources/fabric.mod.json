@@ -17,7 +17,8 @@
 		"brawl.bot.mixins.json",
 		{ "config": "brawl.hud.mixins.json", "environment": "client" },
 		{ "config": "brawl.botclient.mixins.json", "environment": "client" },
-		{ "config": "brawl.model.mixins.json", "environment": "client" }
+		{ "config": "brawl.model.mixins.json", "environment": "client" },
+		{ "config": "brawl.view.mixins.json", "environment": "client" }
 	],
 	"depends": {
 		"fabricloader": ">=0.20.1",
