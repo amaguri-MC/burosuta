@@ -56,7 +56,6 @@ public class BotRenderer extends LivingEntityRenderer<BrawlBot, AvatarRenderStat
 		PlayerSkin skin = DefaultPlayerSkin.get(entity.getUUID());
 		state.skin = skin;
 		state.id = entity.getId();
-		if ((DBG_E++ % 200) == 0) org.slf4j.LoggerFactory.getLogger("brawl-dbg").info("[brawl-dbg] bot extract id={} pos={} brawler={}", entity.getId(), entity.position(), com.amaguri.brawl.client.model.BrawlerLooks.brawlerOf(entity.getId()));
 		state.showHat = true;
 		state.showJacket = true;
 		state.showLeftPants = true;
@@ -88,10 +87,8 @@ public class BotRenderer extends LivingEntityRenderer<BrawlBot, AvatarRenderStat
 		return distanceSq < 48.0 * 48.0 && !entity.isInvisible() && !entity.getBotName().isEmpty();
 	}
 
-	static int DBG_E = 0, DBG_S = 0;
 	@Override
 	public void submit(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera) {
-		if ((DBG_S++ % 200) == 0) org.slf4j.LoggerFactory.getLogger("brawl-dbg").info("[brawl-dbg] bot submit id={}", state.id);
 		// キャラの人形（バニラのモブ）があればそれを描く。人形が作れない/対応が無いときだけ、下の元のプレイヤー型ボットの見た目
 		if (MobPuppets.submitInRenderer(state, poseStack, collector, camera)) {
 			return;
