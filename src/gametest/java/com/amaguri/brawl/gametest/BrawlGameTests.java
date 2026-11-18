@@ -349,12 +349,12 @@ public class BrawlGameTests {
 
 	// ---- 8. ボットの実測速度が キャラの速さ（タイル/秒 × 2）と ±10% で一致する ----
 
-	@GameTest(maxTicks = 220)
+	@GameTest(maxTicks = 260)
 	public void botWalkSpeedMatchesBrawlerSpeed(GameTestHelper h) {
 		runSpeedTest(h, FLOOR_RUN, "rusty");
 	}
 
-	@GameTest(maxTicks = 220)
+	@GameTest(maxTicks = 260)
 	public void botWalkSpeedMatchesFastBrawlerSpeed(GameTestHelper h) {
 		runSpeedTest(h, FLOOR_RUN + 20, "mortis");
 	}
@@ -363,8 +363,9 @@ public class BrawlGameTests {
 		final int w = 7;
 		BlockPos ca = h.absolutePos(new BlockPos(0, f, 0));
 		BlockPos cb = h.absolutePos(new BlockPos(w - 1, f, RUN_LEN - 1));
-		for (int cx = (ca.getX() >> 4) - 1; cx <= (cb.getX() >> 4) + 1; cx++) {
-			for (int cz = (ca.getZ() >> 4) - 1; cz <= (cb.getZ() >> 4) + 1; cz++) {
+		// 構造物は回転して置かれるので、角の大小は決まっていない
+		for (int cx = (Math.min(ca.getX(), cb.getX()) >> 4) - 1; cx <= (Math.max(ca.getX(), cb.getX()) >> 4) + 1; cx++) {
+			for (int cz = (Math.min(ca.getZ(), cb.getZ()) >> 4) - 1; cz <= (Math.max(ca.getZ(), cb.getZ()) >> 4) + 1; cz++) {
 				h.getLevel().setChunkForced(cx, cz, true);
 			}
 		}
@@ -382,23 +383,24 @@ public class BrawlGameTests {
 		BrawlBot runner = BrawlBot.spawnSummon(h.getLevel(), h.absoluteVec(new Vec3(3.5, f + 1, 3.5)), id, "Runner", owner);
 		h.assertTrue(runner != null && Combat.state(runner) != null, "走らせるボットが作れない");
 		final Vec3 goal = h.absoluteVec(new Vec3(3.5, f + 1, 33.5)); // 30 ブロック先
-		final Vec3 start = runner.position();
+		final Vec3[] start = { null };
 		final double[] dist = new double[6];
 		h.onEachTick(() -> {
 			long t = h.getTick();
-			if (t == 1) {
+			if (t == 5) {
+				start[0] = runner.position();
 				boolean ok = runner.getNavigation().moveTo(goal.x, goal.y, goal.z, 1.0);
-				System.out.println("[BOTSPEED] " + id + " moveTo=" + ok + " dist=" + start.distanceTo(goal));
+				System.out.println("[BOTSPEED] " + id + " moveTo=" + ok + " dist=" + start[0].distanceTo(goal));
 			}
-			if (t >= 1 && (t - 1) % 20 == 0 && (t - 1) / 20 < dist.length) {
-				int i = (int) ((t - 1) / 20);
+			if (t >= 5 && (t - 5) % 20 == 0 && (t - 5) / 20 < dist.length) {
+				int i = (int) ((t - 5) / 20);
 				Vec3 p = runner.position();
-				dist[i] = Math.hypot(p.x - start.x, p.z - start.z);
+				dist[i] = Math.hypot(p.x - start[0].x, p.z - start[0].z);
 				System.out.println("[BOTSPEED] " + id + " t=" + t + " d=" + dist[i] + " y=" + runner.getY() + " ground=" + runner.onGround()
 						+ " dm=" + runner.getDeltaMovement() + " nav=" + runner.getNavigation().isInProgress()
 						+ " immobile=" + Combat.immobile(runner) + " attr=" + runner.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED));
 			}
-			if (t == 1 + 20 * 5) {
+			if (t == 5 + 20 * 5) {
 				// 2〜5秒目の平均（加速の立ち上がりを除く）
 				double bps = (dist[5] - dist[1]) / 4.0;
 				double ratio = bps / expect;
