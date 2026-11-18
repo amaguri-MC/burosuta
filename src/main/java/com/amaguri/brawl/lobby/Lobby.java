@@ -157,6 +157,9 @@ public final class Lobby {
 	/** プレイヤー→カカシだけ通す（ロビー）。試合中は今までどおり全部通す。 */
 	private static boolean canHit(LivingEntity attacker, LivingEntity victim) {
 		if (Showdown.running()) return true;
+		boolean lobbyAttacker = attacker != null && IN_LOBBY.contains(attacker.getUUID());
+		boolean lobbyVictim = IN_LOBBY.contains(victim.getUUID()) || LobbyEntities.isDummy(victim) || LobbyEntities.isStatue(victim);
+		if (!lobbyAttacker && !lobbyVictim) return true; // ロビーと無関係（テスト・手動の練習など）
 		return attacker instanceof ServerPlayer && LobbyEntities.isDummy(victim);
 	}
 
