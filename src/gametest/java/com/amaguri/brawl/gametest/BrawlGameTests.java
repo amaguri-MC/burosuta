@@ -351,7 +351,15 @@ public class BrawlGameTests {
 
 	@GameTest(maxTicks = 220)
 	public void botWalkSpeedMatchesBrawlerSpeed(GameTestHelper h) {
-		final int f = FLOOR_RUN;
+		runSpeedTest(h, FLOOR_RUN, "rusty");
+	}
+
+	@GameTest(maxTicks = 220)
+	public void botWalkSpeedMatchesFastBrawlerSpeed(GameTestHelper h) {
+		runSpeedTest(h, FLOOR_RUN + 20, "mortis");
+	}
+
+	private static void runSpeedTest(GameTestHelper h, final int f, final String id) {
 		final int w = 7;
 		BlockPos ca = h.absolutePos(new BlockPos(0, f, 0));
 		BlockPos cb = h.absolutePos(new BlockPos(w - 1, f, RUN_LEN - 1));
@@ -368,7 +376,6 @@ public class BrawlGameTests {
 				}
 			}
 		}
-		final String id = "rusty";
 		final double expect = Brawlers.get(id).speedTiles() * 2.0; // ブロック/秒
 		// 相棒（召喚物）は敵も主もいなければ AI が歩かないので、走らせる実体にする。主は走路の奥に置く
 		BrawlBot owner = bot(h, f, 3.5, RUN_LEN - 3.5, id, "Owner");

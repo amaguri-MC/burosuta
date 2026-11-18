@@ -101,6 +101,8 @@ public final class Combat {
 			} else {
 				sp.setBaseValue(bps / PLAYER_BASE_BPS * PLAYER_BASE_SPEED);
 			}
+			st.baseSpeed = sp.getBaseValue();
+			st.appliedSpeed = st.baseSpeed;
 		}
 		if (e instanceof ServerPlayer p) {
 			p.getFoodData().setFoodLevel(6);
@@ -598,7 +600,7 @@ public final class Combat {
 			}
 		}
 		if (st.baseSpeed >= 0) {
-			double want = st.baseSpeed * mul;
+			double want = st.baseSpeed * (e instanceof BrawlBot ? BrawlBot.attrMulFor(mul) : mul);
 			if (Math.abs(want - st.appliedSpeed) > 1e-9) {
 				AttributeInstance sp = e.getAttribute(Attributes.MOVEMENT_SPEED);
 				if (sp != null) {
