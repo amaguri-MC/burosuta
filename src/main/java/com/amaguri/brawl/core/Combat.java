@@ -101,6 +101,8 @@ public final class Combat {
 			} else {
 				sp.setBaseValue(bps / PLAYER_BASE_BPS * PLAYER_BASE_SPEED);
 			}
+			st.baseSpeed = sp.getBaseValue();
+			st.appliedSpeed = st.baseSpeed;
 		}
 		if (e instanceof ServerPlayer p) {
 			p.getFoodData().setFoodLevel(6);
@@ -283,7 +285,7 @@ public final class Combat {
 		BrawlState st = state(e);
 		if (st == null || !st.alive || st.ownerId != null) return; // 召喚物は拾えない
 		st.cubes++;
-		st.hp = Math.min(st.maxHp(), st.hp + 400);
+		st.hp = Math.min(st.maxHp(), st.hp + st.cubeHp());
 	}
 
 	public static void knockback(LivingEntity e, Vec3 dirUnit, double blocks) {
@@ -598,7 +600,7 @@ public final class Combat {
 			}
 		}
 		if (st.baseSpeed >= 0) {
-			double want = st.baseSpeed * mul;
+			double want = st.baseSpeed * (e instanceof BrawlBot ? BrawlBot.attrMulFor(mul) : mul);
 			if (Math.abs(want - st.appliedSpeed) > 1e-9) {
 				AttributeInstance sp = e.getAttribute(Attributes.MOVEMENT_SPEED);
 				if (sp != null) {

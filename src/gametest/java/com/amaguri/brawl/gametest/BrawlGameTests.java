@@ -39,6 +39,9 @@ public class BrawlGameTests {
 	private static final int FLOOR_BOX = 80;
 	private static final int FLOOR_BUSH = 100;
 	private static final int FLOOR_ELIM = 120;
+	/** 長い走路（他のテストの舞台と干渉しないよう専用の高さ）。 */
+	private static final int FLOOR_RUN = 160;
+	private static final int RUN_LEN = 60;
 
 	/** 床は石、周りと天井はガラス、中は空気。立つ高さは floor+1。 */
 	private static void buildStage(GameTestHelper h, int floor) {
@@ -263,7 +266,7 @@ public class BrawlGameTests {
 			if (s.cubes == 1) {
 				int max = s.maxHp();
 				cleanup(picker);
-				h.assertTrue(max == baseMax + 400, "キューブ1個で最大HPが +400 になるはず: " + max + " (基準 " + baseMax + ")");
+				h.assertTrue(max == baseMax + Math.round(baseMax * 0.1f), "キューブ1個で最大HPが +10% になるはず: " + max + " (基準 " + baseMax + ")");
 				h.succeed();
 			} else if (t > 200) {
 				cleanup(picker);
@@ -341,6 +344,81 @@ public class BrawlGameTests {
 			h.assertTrue(who == victim, "onEliminated に倒れた本人が渡るはず");
 			h.assertFalse(alive, "倒れたら alive=false のはず");
 			h.succeed();
+		});
+	}
+
+	// ---- 8. ボットの実測速度が キャラの速さ（タイル/秒 × 2）と ±10% で一致する ----
+
+	@GameTest(maxTicks = 260)
+	public void botWalkSpeedMatchesBrawlerSpeed(GameTestHelper h) {
+		runSpeedTest(h, FLOOR_RUN, "rusty");
+	}
+
+	@GameTest(maxTicks = 260)
+	public void botWalkSpeedMatchesFastBrawlerSpeed(GameTestHelper h) {
+		runSpeedTest(h, FLOOR_RUN + 20, "mortis");
+	}
+
+	private static void runSpeedTest(GameTestHelper h, final int f, final String id) {
+		final int w = 7;
+		BlockPos ca = h.absolutePos(new BlockPos(0, f, 0));
+		BlockPos cb = h.absolutePos(new BlockPos(w - 1, f, RUN_LEN - 1));
+		// 構造物は回転して置かれるので、角の大小は決まっていない
+		for (int cx = (Math.min(ca.getX(), cb.getX()) >> 4) - 1; cx <= (Math.max(ca.getX(), cb.getX()) >> 4) + 1; cx++) {
+			for (int cz = (Math.min(ca.getZ(), cb.getZ()) >> 4) - 1; cz <= (Math.max(ca.getZ(), cb.getZ()) >> 4) + 1; cz++) {
+				h.getLevel().setChunkForced(cx, cz, true);
+			}
+		}
+		for (int x = 0; x < w; x++) {
+			for (int y = 0; y < H; y++) {
+				for (int z = 0; z < RUN_LEN; z++) {
+					boolean edge = x == 0 || x == w - 1 || z == 0 || z == RUN_LEN - 1 || y == H - 1;
+					h.setBlock(x, f + y, z, y == 0 ? Blocks.STONE : edge ? Blocks.GLASS : Blocks.AIR);
+				}
+			}
+		}
+		final double expect = Brawlers.get(id).speedTiles() * 2.0; // ブロック/秒
+		BrawlBot runner = bot(h, f, 3.5, 3.5, id, "Runner");
+		runner.setNoAi(false);
+		runner.externalControl = true; // 思考させず、navigation だけで歩かせる
+		h.assertTrue(runner != null && Combat.state(runner) != null, "走らせるボットが作れない");
+		final Vec3 goal = h.absoluteVec(new Vec3(3.5, f + 1, 33.5)); // 30 ブロック先
+		final Vec3[] start = { null };
+		final double[] dist = new double[6];
+		h.onEachTick(() -> {
+			long t = h.getTick();
+			if (t == 5) {
+				start[0] = runner.position();
+				boolean ok = runner.getNavigation().moveTo(goal.x, goal.y, goal.z, 1.0);
+				System.out.println("[BOTSPEED] " + id + " moveTo=" + ok + " dist=" + start[0].distanceTo(goal));
+			}
+			if (t == 5 || t == 30) {
+				StringBuilder sb = new StringBuilder();
+				for (int k = 0; k < RUN_LEN; k += 6) {
+					sb.append(k).append(':').append(h.getBlockState(new BlockPos(3, f, k)).getBlock().getName().getString()).append('/')
+							.append(h.getBlockState(new BlockPos(3, f + 1, k)).isAir() ? "air" : "SOLID").append(' ');
+				}
+				var path = runner.getNavigation().getPath();
+				System.out.println("[BOTSPEED] " + id + " t=" + t + " blocks " + sb + " path=" + (path == null ? "null" : path.getNodeCount() + " done=" + path.isDone() + " reach=" + path.canReach()));
+			}
+			if (t >= 5 && (t - 5) % 20 == 0 && (t - 5) / 20 < dist.length) {
+				int i = (int) ((t - 5) / 20);
+				Vec3 p = runner.position();
+				dist[i] = Math.hypot(p.x - start[0].x, p.z - start[0].z);
+				System.out.println("[BOTSPEED] " + id + " t=" + t + " d=" + dist[i] + " y=" + runner.getY() + " ground=" + runner.onGround()
+						+ " dm=" + runner.getDeltaMovement() + " nav=" + runner.getNavigation().isInProgress()
+						+ " immobile=" + Combat.immobile(runner) + " attr=" + runner.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED));
+			}
+			if (t == 5 + 20 * 5) {
+				// 2〜5秒目の平均（加速の立ち上がりを除く）
+				double bps = (dist[5] - dist[1]) / 4.0;
+				double ratio = bps / expect;
+				System.out.println("[BOTSPEED] " + id + " measured=" + bps + " b/s expect=" + expect + " ratio=" + ratio);
+				cleanup(runner);
+				h.assertTrue(Math.abs(ratio - 1.0) <= 0.10,
+						"ボットの実測速度が キャラの速さと ±10% で一致しない: 実測 " + bps + " b/s / 期待 " + expect + " b/s");
+				h.succeed();
+			}
 		});
 	}
 }

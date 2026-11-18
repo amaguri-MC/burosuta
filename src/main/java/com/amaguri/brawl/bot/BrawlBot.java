@@ -53,12 +53,20 @@ public class BrawlBot extends PathfinderMob {
 	/** easy|normal|hard（W4 のコマンドが書く）。 */
 	public static String difficulty = "normal";
 
-	/** プレイヤーの基本速度 0.1 が 4.317 ブロック/秒。 */
+	/** プレイヤーの基本速度 0.1 が 4.317 ブロック/秒（プレイヤーは属性値に比例して速くなる）。 */
 	private static final double PLAYER_BASE_SPEED = 0.1;
-	private static final double PLAYER_BPS = 4.317;
+	/**
+	 * Mob の実速度（ブロック/秒）= MOB_BPS_PER_ATTR_SQ * 属性値^2。
+	 * 26.2 の Mob は MoveControl が属性値×速度倍率を setSpeed に入れ、移動時にさらに属性値が掛かるため、属性値の2乗に比例する
+	 * （サーバー gametest の実測: 属性 0.1112 で 0.545 ブロック/秒 → 44.05）。
+	 */
+	private static final double MOB_BPS_PER_ATTR_SQ = 44.05;
 	private static final int REPATH_TICKS = 20; // 経路の再計算は1秒に1回まで
 	private static final double LOW_HP_RATIO = 0.35;
 	private static final double GAS_LOOKAHEAD_SEC = 5.0;
+
+	/** true なら自前の思考をしない（gametest が navigation を直接動かすための口）。 */
+	public boolean externalControl;
 
 	private String brawlerId = "";
 	private String botName = "";
@@ -100,7 +108,12 @@ public class BrawlBot extends PathfinderMob {
 
 	/** 目標の速さ（ブロック/秒）→ MOVEMENT_SPEED の値。移動は navigation の速度倍率 1.0 で行う。 */
 	public static double speedFor(double blocksPerSec) {
-		return PLAYER_BASE_SPEED * blocksPerSec / PLAYER_BPS;
+		return Math.sqrt(Math.max(0.0, blocksPerSec) / MOB_BPS_PER_ATTR_SQ);
+	}
+
+	/** 速度が mul 倍（減速・加速・停止）になるように、属性値に掛ける係数。 */
+	public static double attrMulFor(double mul) {
+		return Math.sqrt(Math.max(0.0, mul));
 	}
 
 	public String getBrawlerId() {
@@ -221,6 +234,9 @@ public class BrawlBot extends PathfinderMob {
 		// スタン・凍結・溜め中（frank のハンマー）は動かない・撃たない（移動速度は core が0にする）
 		if (Combat.immobile(this)) {
 			getNavigation().stop();
+			return;
+		}
+		if (externalControl) {
 			return;
 		}
 		if (st.ownerId != null) {
