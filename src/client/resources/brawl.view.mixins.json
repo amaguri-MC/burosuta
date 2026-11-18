@@ -6,7 +6,8 @@
 		"CameraMixin",
 		"KeyboardInputMixin",
 		"MouseHandlerMixin",
-		"ViewMinecraftMixin"
+		"ViewMinecraftMixin",
+		"HandHideMixin"
 	],
 	"injectors": { "defaultRequire": 1 }
 }

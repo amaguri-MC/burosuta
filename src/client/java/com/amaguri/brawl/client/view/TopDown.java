@@ -13,7 +13,7 @@ public final class TopDown {
 
 	public static final float YAW = 180f;        // 北向き固定
 	public static final float PITCH = 58f;       // 俯角
-	public static final double DISTANCE = 15.0;  // 注視点からカメラまで
+	public static final double DISTANCE = 11.5;  // 注視点からカメラまで
 	public static final double AIM_HEIGHT = 1.0; // 足元からの照準面の高さ
 
 	/** キー V で切り替える（既定ON）。 */

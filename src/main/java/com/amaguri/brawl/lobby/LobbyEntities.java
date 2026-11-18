@@ -103,7 +103,7 @@ final class LobbyEntities {
 			if (statueNames[k] == null || statueNames[k].isRemoved()) {
 				MutableComponent name = Component.literal(def.nameJa()).withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD);
 				name.append(Component.literal("\n" + def.roleJa()).withStyle(ChatFormatting.WHITE));
-				statueNames[k] = LobbyText.spawn(lvl, p.add(0, 2.35, 0), name, 1.4f, 160, TAG);
+				statueNames[k] = LobbyText.spawn(lvl, p.add(0, 2.35, 0), name, 3.0f, 160, TAG);
 			}
 		}
 		// カカシ
@@ -122,15 +122,15 @@ final class LobbyEntities {
 		if (padText == null || padText.isRemoved()) {
 			MutableComponent t = Component.translatableWithFallback("brawl.lobby.pad", "プレイ").withStyle(ChatFormatting.BOLD, ChatFormatting.YELLOW);
 			t.append(Component.translatableWithFallback("brawl.lobby.pad_sub", "\n全員が乗ると開始").withStyle(ChatFormatting.WHITE));
-			padText = LobbyText.spawn(lvl, L.padText(), t, 2.4f, 200, TAG);
+			padText = LobbyText.spawn(lvl, L.padText(), t, 4.5f, 200, TAG);
 		}
 		if (practiceText == null || practiceText.isRemoved()) {
 			MutableComponent t = Component.translatableWithFallback("brawl.lobby.practice", "練習場").withStyle(ChatFormatting.BOLD, ChatFormatting.GREEN);
 			t.append(Component.translatableWithFallback("brawl.lobby.practice_sub", "\nカカシを撃とう").withStyle(ChatFormatting.WHITE));
-			practiceText = LobbyText.spawn(lvl, L.practiceText(), t, 1.6f, 200, TAG);
+			practiceText = LobbyText.spawn(lvl, L.practiceText(), t, 3.2f, 200, TAG);
 		}
 		if (boardText == null || boardText.isRemoved()) {
-			boardText = LobbyText.spawn(lvl, L.boardText(), boardComponent(), 1.3f, 200, TAG);
+			boardText = LobbyText.spawn(lvl, L.boardText(), boardComponent(), 2.6f, 200, TAG);
 		}
 	}
 

@@ -89,7 +89,7 @@ final class HudRenderer {
 	private static int[] project(Minecraft mc, double x, double y, double z, int w, int h) {
 		// UNVERIFIED: GameRenderer.projectPointToScreen は NDC（x,y が -1〜1、z>1 で背面）を返すと仮定
 		Vec3 ndc = mc.gameRenderer.projectPointToScreen(new Vec3(x, y, z));
-		if (ndc == null || ndc.z > 1.0 || ndc.z < -1.0 || Math.abs(ndc.x) > 1.1 || Math.abs(ndc.y) > 1.1) return null;
+		if (ndc == null || ndc.z > 1.0 || ndc.z < -1.0 || Math.abs(ndc.x) > 0.98 || Math.abs(ndc.y) > 0.98) return null;
 		return new int[] { (int) ((ndc.x + 1.0) * 0.5 * w), (int) ((1.0 - ndc.y) * 0.5 * h) };
 	}
 
