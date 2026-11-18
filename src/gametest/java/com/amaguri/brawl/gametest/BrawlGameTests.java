@@ -378,9 +378,9 @@ public class BrawlGameTests {
 			}
 		}
 		final double expect = Brawlers.get(id).speedTiles() * 2.0; // ブロック/秒
-		// 相棒（召喚物）は敵も主もいなければ AI が歩かないので、走らせる実体にする。主は走路の奥に置く
-		BrawlBot owner = bot(h, f, 3.5, RUN_LEN - 3.5, id, "Owner");
-		BrawlBot runner = BrawlBot.spawnSummon(h.getLevel(), h.absoluteVec(new Vec3(3.5, f + 1, 3.5)), id, "Runner", owner);
+		BrawlBot runner = bot(h, f, 3.5, 3.5, id, "Runner");
+		runner.setNoAi(false);
+		runner.externalControl = true; // 思考させず、navigation だけで歩かせる
 		h.assertTrue(runner != null && Combat.state(runner) != null, "走らせるボットが作れない");
 		final Vec3 goal = h.absoluteVec(new Vec3(3.5, f + 1, 33.5)); // 30 ブロック先
 		final Vec3[] start = { null };
@@ -414,7 +414,7 @@ public class BrawlGameTests {
 				double bps = (dist[5] - dist[1]) / 4.0;
 				double ratio = bps / expect;
 				System.out.println("[BOTSPEED] " + id + " measured=" + bps + " b/s expect=" + expect + " ratio=" + ratio);
-				cleanup(runner, owner);
+				cleanup(runner);
 				h.assertTrue(Math.abs(ratio - 1.0) <= 0.10,
 						"ボットの実測速度が キャラの速さと ±10% で一致しない: 実測 " + bps + " b/s / 期待 " + expect + " b/s");
 				h.succeed();

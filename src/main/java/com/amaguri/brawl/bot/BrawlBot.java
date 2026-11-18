@@ -65,6 +65,9 @@ public class BrawlBot extends PathfinderMob {
 	private static final double LOW_HP_RATIO = 0.35;
 	private static final double GAS_LOOKAHEAD_SEC = 5.0;
 
+	/** true なら自前の思考をしない（gametest が navigation を直接動かすための口）。 */
+	public boolean externalControl;
+
 	private String brawlerId = "";
 	private String botName = "";
 
@@ -231,6 +234,9 @@ public class BrawlBot extends PathfinderMob {
 		// スタン・凍結・溜め中（frank のハンマー）は動かない・撃たない（移動速度は core が0にする）
 		if (Combat.immobile(this)) {
 			getNavigation().stop();
+			return;
+		}
+		if (externalControl) {
 			return;
 		}
 		if (st.ownerId != null) {
