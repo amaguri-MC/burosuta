@@ -60,6 +60,11 @@ public class BrawlClientTest implements FabricClientGameTest {
 			context.takeScreenshot(TestScreenshotOptions.of("lineup_lobby").disableCounterPrefix());
 			server.runCommand("kill @e[type=brawl:brawl_bot,tag=!brawl_lobby]");
 			context.waitTicks(5);
+			server.runCommand("execute as @a at @s run tp @s ~ ~ ~-16");
+			context.waitTicks(40);
+			context.takeScreenshot(TestScreenshotOptions.of("statues").disableCounterPrefix());
+			server.runCommand("execute as @a at @s run tp @s ~ ~ ~16");
+			context.waitTicks(10);
 
 			server.runCommand("brawl start 9");
 			// 3秒カウントダウンが明けてから 3秒後
