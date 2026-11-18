@@ -3,21 +3,23 @@ package com.amaguri.brawl.client.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.entity.state.HoglinRenderState;
 import net.minecraft.client.renderer.entity.state.IllagerRenderState;
 import net.minecraft.client.renderer.entity.state.IronGolemRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.entity.state.PolarBearRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -26,6 +28,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.animal.golem.SnowGolem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -41,7 +44,7 @@ public final class MobPuppets {
 	/** 見た目の高さ（ブロック）。 */
 	public static final float TARGET_HEIGHT = 1.9f;
 
-	private enum Kind { PILLAGER, SKELETON, HOGLIN, BLAZE, GOLEM, BEAR, WITCH }
+	private enum Kind { PILLAGER, WITHER_SKELETON, COW, BLAZE, GOLEM, SNOW_GOLEM, BEAR, WITCH, ALLAY, TRADER }
 
 	/**
 	 * face = 頭の正面の UV（テクセル）と、そのテクスチャ全体の大きさ。
@@ -60,15 +63,23 @@ public final class MobPuppets {
 	private static final Map<String, Spec> SPECS = new HashMap<>();
 
 	static {
-		// 幅の上限: 二足は1.2。四足（ホグリン・シロクマ）は体が横に長く、1.2だと高さが揃わないので1.9まで許す。
+		// 幅の上限: 二足は1.2。四足（牛・シロクマ）は体が横に長く、1.2だと高さが揃わないので1.9まで許す。
 		// 顔 UNVERIFIED（上のとおり）: 頭の箱の texOffs=(u0,v0), 寸法 w×h×d のとき 正面=(u0+d, v0+d, w, h)
 		SPECS.put("rusty", new Spec(EntityTypes.PILLAGER, Kind.PILLAGER, 0f, 1.2f, new Face(8, 8, 8, 10, 64, 64)));
-		SPECS.put("kaden", new Spec(EntityTypes.SKELETON, Kind.SKELETON, 0f, 1.2f, new Face(8, 8, 8, 8, 64, 32)));
-		SPECS.put("gouen", new Spec(EntityTypes.HOGLIN, Kind.HOGLIN, 0f, 1.9f, new Face(80, 20, 14, 6, 128, 64)));
+		SPECS.put("gouen", new Spec(EntityTypes.COW, Kind.COW, 0f, 1.9f, new Face(6, 6, 8, 8, 64, 32)));
+		SPECS.put("frank", new Spec(EntityTypes.IRON_GOLEM, Kind.GOLEM, 0f, 1.2f, new Face(8, 8, 8, 10, 128, 128)));
+		// 銅のゴーレム: 頭 8x5x10 (texOffs 0,0) → 正面 (10,10,8,5)。テクスチャ 64x64
+		SPECS.put("darryl", new Spec(EntityTypes.COPPER_GOLEM, Kind.GOLEM, 0f, 1.2f, new Face(10, 10, 8, 5, 64, 64)));
 		SPECS.put("mimosa", new Spec(EntityTypes.BLAZE, Kind.BLAZE, 0.15f, 1.2f, new Face(8, 8, 8, 8, 64, 32)));
-		SPECS.put("takomaru", new Spec(EntityTypes.IRON_GOLEM, Kind.GOLEM, 0f, 1.2f, new Face(8, 8, 8, 10, 128, 128)));
-		SPECS.put("nita", new Spec(EntityTypes.POLAR_BEAR, Kind.BEAR, 0f, 1.9f, new Face(7, 7, 7, 7, 128, 64)));
 		SPECS.put("barley", new Spec(EntityTypes.WITCH, Kind.WITCH, 0f, 1.2f, new Face(10, 10, 10, 10, 64, 128)));
+		SPECS.put("nita", new Spec(EntityTypes.POLAR_BEAR, Kind.BEAR, 0f, 1.9f, new Face(7, 7, 7, 7, 128, 64)));
+		// アレイは高さ0.6の小さな妖精で、拡大すると地面にめり込んで見えるので少し浮かせる。頭 5x5x5 (texOffs 0,0)。テクスチャ 32x32
+		SPECS.put("poco", new Spec(EntityTypes.ALLAY, Kind.ALLAY, 0.3f, 1.2f, new Face(5, 5, 5, 5, 32, 32)));
+		// 行商人: 村人と同じ 64x64。頭 8x10x8 (texOffs 0,0)
+		SPECS.put("mortis", new Spec(EntityTypes.WANDERING_TRADER, Kind.TRADER, 0f, 1.2f, new Face(8, 8, 8, 10, 64, 64)));
+		SPECS.put("edgar", new Spec(EntityTypes.WITHER_SKELETON, Kind.WITHER_SKELETON, 0f, 1.2f, new Face(8, 8, 8, 8, 64, 32)));
+		// スノーゴーレム: 頭 8x8x8 (texOffs 0,0)。カボチャ頭は人形の実体で hasPumpkin=true にして描く（顔アイコンは頭の素の面）
+		SPECS.put("lou", new Spec(EntityTypes.SNOW_GOLEM, Kind.SNOW_GOLEM, 0f, 1.2f, new Face(8, 8, 8, 8, 64, 64)));
 	}
 
 	public static boolean has(String brawlerId) {
@@ -117,14 +128,19 @@ public final class MobPuppets {
 		}
 		e.setId(nextId--); // level に載せない仮の実体は負のID
 		if (e instanceof Mob m) {
-			if (sp.kind == Kind.PILLAGER || sp.kind == Kind.SKELETON) {
+			if (sp.kind == Kind.PILLAGER || sp.kind == Kind.WITHER_SKELETON) {
 				m.setAggressive(true); // 構えたままにする
 			}
 			m.setNoAi(true);
 		}
 		switch (sp.kind) {
 			case PILLAGER -> e.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.CROSSBOW));
-			case SKELETON -> e.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
+			case WITHER_SKELETON -> e.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_SWORD));
+			case SNOW_GOLEM -> {
+				if (e instanceof SnowGolem sg) {
+					sg.setPumpkin(true); // カボチャ頭あり（既定でも true）
+				}
+			}
 			default -> {
 			}
 		}
@@ -233,6 +249,38 @@ public final class MobPuppets {
 		}
 	}
 
+	/**
+	 * レンダラの submit の中から人形を描く（BotRenderer 用の保険。ディスパッチャの mixin が先に人形に差し替えていれば、ここへは来ない）。
+	 * 描いた（または透明・脱落で描かないと決めた）なら true。人形にしないなら false（呼び出し側が元の見た目を描く）。
+	 * poseStack はディスパッチャが実体の位置まで移動済みのものをそのまま渡す。
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static boolean submitInRenderer(AvatarRenderState a, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
+		String bid = BrawlerLooks.brawlerOf(a.id);
+		if (bid == null || !has(bid)) {
+			return false;
+		}
+		if (a.isSpectator || a.isInvisible) {
+			return true;
+		}
+		EntityRenderDispatcher d = Minecraft.getInstance().getEntityRenderDispatcher();
+		LivingEntityRenderState ps = build(d, a, bid);
+		if (ps == null) {
+			return false;
+		}
+		try {
+			EntityRenderer r = d.getRenderer((EntityRenderState) ps);
+			pose.pushPose();
+			pose.translate(0.0, hover(bid), 0.0);
+			r.submit(ps, pose, collector, camera);
+			pose.popPose();
+			return true;
+		} catch (Throwable t) {
+			fail(t);
+			return false;
+		}
+	}
+
 	/** 攻撃の振り（0=待機〜1）を、そのモブの自然なアニメに変える。 */
 	private static void applyAttack(Kind kind, LivingEntityRenderState ps, float atk) {
 		if (ps instanceof ArmedEntityRenderState a) {
@@ -240,9 +288,6 @@ public final class MobPuppets {
 		}
 		if (ps instanceof IllagerRenderState il) {
 			il.attackAnim = atk;
-		}
-		if (ps instanceof HoglinRenderState h) {
-			h.attackAnimationRemainingTicks = atk > 0f ? Math.max(1, Math.round(10f * (1f - atk))) : 0; // 頭突き
 		}
 		if (ps instanceof IronGolemRenderState g) {
 			g.attackTicksRemaining = atk > 0f ? 10f * (1f - atk) : 0f; // 腕振り

@@ -47,10 +47,10 @@ public class BrawlClientTest implements FabricClientGameTest {
 			server.runOnServer(ms -> {
 				net.minecraft.server.level.ServerPlayer pl = ms.getPlayerList().getPlayers().get(0);
 				net.minecraft.server.level.ServerLevel lvl = (net.minecraft.server.level.ServerLevel) pl.level();
-				String[] ids = {"rusty", "kaden", "gouen", "mimosa", "takomaru", "nita", "barley"};
+				String[] ids = {"rusty", "nita", "gouen", "frank", "darryl", "mimosa", "barley", "poco", "mortis", "edgar", "lou"};
 				for (int i = 0; i < ids.length; i++) {
 					com.amaguri.brawl.bot.BrawlBot b = com.amaguri.brawl.bot.BrawlBot.spawn(lvl,
-							pl.position().add(-6 + i * 2, 0, -4), ids[i], ids[i]);
+							pl.position().add(-10 + i * 2, 0, -4), ids[i], ids[i]);
 					if (b == null) continue;
 					b.setNoAi(true);
 					b.setYRot(0f); b.setYHeadRot(0f); b.setYBodyRot(0f);
@@ -92,7 +92,7 @@ public class BrawlClientTest implements FabricClientGameTest {
 			server.runOnServer(ms -> net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(
 					ms.getPlayerList().getPlayers().get(0), new com.amaguri.brawl.api.Net.ResultPayload(1, 10, 10, 130,
 							new String[] {"Player", "ボット1", "ボット2", "ボット3"},
-							new String[] {"rusty", "kaden", "gouen", "mimosa"}, new int[] {1, 2, 3, 4})));
+							new String[] {"rusty", "frank", "gouen", "mimosa"}, new int[] {1, 2, 3, 4})));
 			context.waitTicks(30);
 			context.takeScreenshot(TestScreenshotOptions.of("result_screen").disableCounterPrefix());
 			context.runOnClient(c -> c.gui.setScreen(null));

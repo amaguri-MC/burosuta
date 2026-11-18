@@ -20,6 +20,29 @@ public final class BrawlState {
 	/** 召喚物（ニタの相棒など）なら召喚主の UUID。普通の参加者は null。 */
 	public UUID ownerId;
 
+	// ---- 状態異常（tick は Combat.now() 基準。サーバースレッド専用）----
+	public long stunUntil;
+	public long freezeUntil;
+	public long slowUntil;
+	public double slowMul = 1.0;
+	/** 溜め攻撃中（動けない）。攻撃・必殺も不可。 */
+	public long lockUntil;
+	/** 加速（エドガーの着地後）。+hasteBlocksPerSec ブロック/秒。 */
+	public long hasteUntil;
+	public double hasteBlocksPerSec;
+	/** 凍結ゲージ 0〜100 と、最後に加わった tick。 */
+	public float frost;
+	public long frostAddedTick;
+	/** 氷の床の上にいる間（この tick まで）。 */
+	public long onIceUntil;
+	/** この tick までは押し出し（ノックバック・突進）中なので、動けない状態でも速度を止めない。 */
+	public long pushUntil;
+	/** 溜め攻撃の世代。スタンなどで中断されたら増える。 */
+	public int chargeToken;
+	/** join 時に設定した移動速度属性値（状態異常で変える前の値）。 */
+	double baseSpeed = -1;
+	double appliedSpeed = -1;
+
 	BrawlState(UUID id, String brawlerId) {
 		this.id = id;
 		this.brawlerId = brawlerId;

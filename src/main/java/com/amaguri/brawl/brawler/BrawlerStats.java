@@ -3,7 +3,7 @@ package com.amaguri.brawl.brawler;
 import java.util.List;
 
 /**
- * 7キャラ＋相棒の数値の唯一の置き場所（ブロスタ準拠）。距離はタイル（使う側で Tiles.b() によりブロックへ）、
+ * 11キャラ＋相棒の数値の唯一の置き場所（ブロスタ準拠）。距離はタイル（使う側で Tiles.b() によりブロックへ）、
  * 弾速はブロック/tick、角度は度、時間は tick（20tick=1秒）。
  */
 public final class BrawlerStats {
@@ -14,7 +14,7 @@ public final class BrawlerStats {
 
 	// ---- ラスティ ----
 	static final int RUSTY_HP = 3900;
-	static final double RUSTY_SPEED = 2.57;
+	static final double RUSTY_SPEED = 2.4;
 	static final double RUSTY_RELOAD = 1.5;
 	static final float RUSTY_SUPER_PER_HIT = 0.067f;
 	static final int RUSTY_PELLETS = 5, RUSTY_DMG = 300;
@@ -22,21 +22,11 @@ public final class BrawlerStats {
 	static final int RUSTY_SUPER_PELLETS = 9, RUSTY_SUPER_DMG = 320;
 	static final double RUSTY_SUPER_RANGE = 7.67, RUSTY_SUPER_FAN = 40, RUSTY_SUPER_KNOCK_TILES = 3;
 
-	// ---- ケイデン ----
-	static final int KADEN_HP = 2800;
-	static final double KADEN_SPEED = 2.4;
-	static final double KADEN_RELOAD = 1.6;
-	static final float KADEN_SUPER_PER_HIT = 0.042f;
-	static final int KADEN_BULLETS = 6, KADEN_DMG = 360, KADEN_BULLET_INTERVAL_TICKS = 2;
-	static final double KADEN_RANGE = 9.33, KADEN_SPEED_BPT = 1.2, KADEN_SCATTER_DEG = 2, KADEN_BULLET_RADIUS = 0.3;
-	static final int KADEN_SUPER_BULLETS = 12, KADEN_SUPER_DMG = 360;
-	static final double KADEN_SUPER_RANGE = 12.67;
-
 	// ---- ゴウエン ----
 	static final int GOUEN_HP = 5000;
 	static final double GOUEN_SPEED = 2.57;
 	static final double GOUEN_RELOAD = 1.6;
-	static final float GOUEN_SUPER_PER_HIT = 0.0625f;
+	static final float GOUEN_SUPER_PER_HIT = 0.1f;
 	static final int GOUEN_PELLETS = 5, GOUEN_DMG = 400;
 	static final double GOUEN_RANGE = 5.33, GOUEN_FAN = 25, GOUEN_SPEED_BPT = 1.0, GOUEN_PELLET_RADIUS = 0.4;
 	static final double GOUEN_SUPER_DASH_TILES = 10;
@@ -50,21 +40,79 @@ public final class BrawlerStats {
 	static final double MIMOSA_SPEED = 2.4;
 	static final double MIMOSA_RELOAD = 2.1;
 	static final float MIMOSA_SUPER_PER_HIT = 0.25f;
-	static final int MIMOSA_DMG = 1040;
+	static final int MIMOSA_DMG = 1180;
 	static final double MIMOSA_RANGE = 9.67, MIMOSA_SPEED_BPT = 0.8, MIMOSA_ROCKET_RADIUS = 0.4, MIMOSA_BLAST_TILES = 1;
-	static final int MIMOSA_SUPER_ROCKETS = 9, MIMOSA_SUPER_DMG = 1040, MIMOSA_SUPER_INTERVAL_TICKS = 3, MIMOSA_SUPER_FALL_TICKS = 8;
+	static final int MIMOSA_SUPER_ROCKETS = 9, MIMOSA_SUPER_DMG = 1180, MIMOSA_SUPER_INTERVAL_TICKS = 3, MIMOSA_SUPER_FALL_TICKS = 8;
 	static final double MIMOSA_SUPER_CENTER_TILES = 7.67, MIMOSA_SUPER_AREA_TILES = 3;
 
-	// ---- タコまる ----
-	static final int TAKOMARU_HP = 6000;
-	static final double TAKOMARU_SPEED = 2.57;
-	static final double TAKOMARU_RELOAD = 1.1;
-	static final float TAKOMARU_SUPER_PER_HIT = 0.0625f;
-	static final int TAKOMARU_PUNCHES = 4, TAKOMARU_DMG = 380;
-	static final double TAKOMARU_RANGE = 3, TAKOMARU_SPEED_BPT = 0.9, TAKOMARU_FAN = 40, TAKOMARU_PUNCH_RADIUS = 0.6;
-	static final double TAKOMARU_SUPER_JUMP_TILES = 6, TAKOMARU_SUPER_RADIUS_TILES = 1.5, TAKOMARU_SUPER_KNOCK_TILES = 1.5;
-	static final int TAKOMARU_SUPER_DMG = 800, TAKOMARU_SUPER_FLIGHT_TICKS = 16;
-	static final double TAKOMARU_SUPER_JUMP_HEIGHT_BLOCKS = 3.5;
+	// ---- フランク（アイアンゴーレム）。HP7000・1680・射程6・溜め1.3秒・スタン2秒・射程7 は stats.md。速さ・ダメ・リロード・ゲージは推定 ----
+	static final int FRANK_HP = 7000;
+	static final double FRANK_SPEED = 2.4;   // 推定
+	static final double FRANK_RELOAD = 1.6;  // 推定
+	static final float FRANK_SUPER_PER_HIT = 0.34f; // 推定
+	static final int FRANK_DMG = 1680;       // 推定
+	static final double FRANK_RANGE = 6, FRANK_FAN = 50, FRANK_BULLET_SPEED_BPT = 1.4, FRANK_BULLET_RADIUS = 0.6;
+	static final int FRANK_CHARGE_TICKS = 26; // 1.3秒（動けない）
+	static final double FRANK_SUPER_RANGE = 7;
+	static final int FRANK_SUPER_DMG = 1680, FRANK_SUPER_STUN_TICKS = 40; // 推定（ダメージ）
+
+	// ---- ダリル（カッパーゴーレム）。HP5000・速さ・240×5を2回(0.25秒)・リロード1.8・樽7タイル400・自動30秒 は stats.md。射程6は推定 ----
+	static final int DARRYL_HP = 5000;
+	static final double DARRYL_SPEED = 2.57;
+	static final double DARRYL_RELOAD = 1.8;
+	static final float DARRYL_SUPER_PER_HIT = 0.02f;
+	static final float DARRYL_AUTO_SUPER_PER_TICK = 1f / (30 * 20);
+	static final int DARRYL_PELLETS = 5, DARRYL_DMG = 240, DARRYL_VOLLEYS = 2, DARRYL_VOLLEY_INTERVAL_TICKS = 5;
+	static final double DARRYL_RANGE = 6, DARRYL_FAN = 25, DARRYL_SPEED_BPT = 1.0, DARRYL_PELLET_RADIUS = 0.4; // 射程は推定
+	static final double DARRYL_SUPER_DASH_TILES = 7;
+	static final int DARRYL_SUPER_DASH_TICKS = 12, DARRYL_SUPER_DMG = 400;
+	static final double DARRYL_SUPER_KNOCK_TILES = 1.5, DARRYL_SUPER_HIT_RADIUS_BLOCKS = 1.4; // 押し出しの距離は推定
+
+	// ---- ポコ（アレイ）。HP4000・速さ・700・射程7・扇45°・リロード1.6・回復2100 は stats.md。ゲージ・超音波の扇は推定 ----
+	static final int POCO_HP = 4000;
+	static final double POCO_SPEED = 2.4;
+	static final double POCO_RELOAD = 1.6;
+	static final float POCO_SUPER_PER_HIT = 0.2f; // 推定
+	static final int POCO_DMG = 700;
+	static final double POCO_RANGE = 7, POCO_FAN = 45, POCO_WAVE_SPEED_BPT = 1.1, POCO_WAVE_RADIUS = 0.6;
+	static final int POCO_SUPER_HEAL = 2100, POCO_SUPER_DMG = 700; // 超音波のダメージは推定（通常と同じ）
+	static final double POCO_SUPER_RANGE = 7.67, POCO_SUPER_FAN = 70; // 推定
+
+	// ---- モーティス（行商人）。HP3800・速さ・突進2.67タイル900・リロード2.4・コウモリ射程10・900 は stats.md。回復900・ゲージは推定 ----
+	static final int MORTIS_HP = 3800;
+	static final double MORTIS_SPEED = 2.73;
+	static final double MORTIS_RELOAD = 2.4;
+	static final float MORTIS_SUPER_PER_HIT = 0.25f; // 推定
+	static final double MORTIS_DASH_TILES = 2.67, MORTIS_DASH_HIT_RADIUS_BLOCKS = 1.3;
+	static final int MORTIS_DASH_TICKS = 4, MORTIS_DMG = 900;
+	static final double MORTIS_SUPER_RANGE = 10, MORTIS_SUPER_FAN = 50, MORTIS_BAT_SPEED_BPT = 1.1, MORTIS_BAT_RADIUS = 0.7;
+	static final int MORTIS_SUPER_DMG = 900, MORTIS_SUPER_HEAL_PER_HIT = 900; // 回復は推定
+
+	// ---- エドガー（ウィザースケルトン）。HP2800・2連パンチ・跳躍7タイル・2.5秒・毎秒3.333%・速さ以外の多くは推定 ----
+	static final int EDGAR_HP = 2800;
+	static final double EDGAR_SPEED = 2.73;   // 推定
+	static final double EDGAR_RELOAD = 0.5;   // 推定
+	static final float EDGAR_SUPER_PER_HIT = 0.05f; // 推定
+	static final float EDGAR_AUTO_SUPER_PER_TICK = 1f / (30 * 20);
+	static final int EDGAR_DMG = 360, EDGAR_PUNCHES = 2, EDGAR_PUNCH_INTERVAL_TICKS = 4; // 360は推定
+	static final double EDGAR_RANGE = 1.67, EDGAR_PUNCH_SPEED_BPT = 1.0, EDGAR_PUNCH_RADIUS = 0.9; // 射程は推定
+	static final float EDGAR_LIFESTEAL = 0.25f;
+	static final double EDGAR_SUPER_LEAP_TILES = 7, EDGAR_SUPER_HEIGHT_BLOCKS = 3.5;
+	static final int EDGAR_SUPER_FLIGHT_TICKS = 14, EDGAR_HASTE_TICKS = 50;
+	static final double EDGAR_HASTE_TILES_PER_SEC = 0.67;
+
+	// ---- ルー（スノーゴーレム）。HP3100・雪玉3連400・凍結14.3%・氷の床 半径3射程8 は stats.md。速さ・射程9・リロード・5秒・ゲージは推定 ----
+	static final int LOU_HP = 3100;
+	static final double LOU_SPEED = 2.4;   // 推定
+	static final double LOU_RELOAD = 1.7;  // 推定
+	static final float LOU_SUPER_PER_HIT = 0.1f; // 推定
+	static final int LOU_DMG = 400, LOU_BALLS = 3, LOU_BALL_INTERVAL_TICKS = 3;
+	static final double LOU_RANGE = 9, LOU_BALL_SPEED_BPT = 1.1, LOU_BALL_RADIUS = 0.4; // 射程は推定
+	static final float LOU_FROST_PER_HIT = 14.3f;
+	static final double LOU_SUPER_RANGE = 8, LOU_FLOOR_RADIUS_TILES = 3;
+	static final int LOU_FLOOR_TICKS = 100; // 5秒は推定
+	static final int LOU_SLOW_TICKS = 30, LOU_STOP_TICKS = 6; // 0.3秒止まる
+	static final double LOU_SLOW_MUL = 0.5; // 推定
 
 	// ---- ニタ（シロクマ）。HP・速さ・ダメージ・リロード・ゲージは wiki の更新履歴の値。射程・幅は UNVERIFIED（stats.md 参照）----
 	static final int NITA_HP = 4000;
@@ -84,15 +132,29 @@ public final class BrawlerStats {
 	// ---- バーリー（ウィッチ）。速さ・水たまり半径2タイル・時間2秒/4秒・680/秒・5本は wiki。HP・射程・リロード・ゲージは UNVERIFIED ----
 	static final int BARLEY_HP = 2400;
 	static final double BARLEY_SPEED = 2.4;
-	static final double BARLEY_RELOAD = 2.0;
+	static final double BARLEY_RELOAD = 2.1;
 	static final float BARLEY_SUPER_PER_HIT = 0.1f;
-	static final double BARLEY_RANGE = 8.67;
+	static final double BARLEY_RANGE = 7.67;
 	static final int BARLEY_LOB_TICKS = 14;
 	static final double BARLEY_PUDDLE_RADIUS_TILES = 2;
-	static final int BARLEY_PUDDLE_TICKS = 40, BARLEY_SUPER_PUDDLE_TICKS = 80;
+	static final int BARLEY_PUDDLE_TICKS = 30, BARLEY_SUPER_PUDDLE_TICKS = 80;
 	static final int BARLEY_DPS = 680, BARLEY_TICK_INTERVAL = 10; // 10tickごとに DPS/2
-	static final int BARLEY_SUPER_BOTTLES = 5, BARLEY_SUPER_INTERVAL_TICKS = 4;
+	static final int BARLEY_SUPER_BOTTLES = 5, BARLEY_SUPER_INTERVAL_TICKS = 5;
 	static final double BARLEY_SUPER_CENTER_TILES = 7.0, BARLEY_SUPER_AREA_TILES = 3.0; // UNVERIFIED
+
+	/** 自動の必殺チャージ（1tickあたり）。無いキャラは 0。 */
+	static float autoSuperPerTick(String id) {
+		return switch (id) {
+			case "darryl" -> DARRYL_AUTO_SUPER_PER_TICK;
+			case "edgar" -> EDGAR_AUTO_SUPER_PER_TICK;
+			default -> 0f;
+		};
+	}
+
+	/** 与えたダメージのうち回復する割合。 */
+	static float lifesteal(String id) {
+		return "edgar".equals(id) ? EDGAR_LIFESTEAL : 0f;
+	}
 
 	static BrawlerDef bearDef() {
 		return new BrawlerDef("nitabear", "シロクマの相棒", BEAR_HP, BEAR_SPEED, MAX_AMMO, 1.0, ATTACK_COOLDOWN_TICKS,
@@ -103,14 +165,22 @@ public final class BrawlerStats {
 		return List.of(
 				new BrawlerDef("rusty", "襲撃者（アタッカー）", RUSTY_HP, RUSTY_SPEED, MAX_AMMO, RUSTY_RELOAD, ATTACK_COOLDOWN_TICKS,
 						RUSTY_RANGE, RUSTY_SUPER_RANGE, RUSTY_SUPER_PER_HIT, "アタッカー"),
-				new BrawlerDef("kaden", "スケルトン（アタッカー）", KADEN_HP, KADEN_SPEED, MAX_AMMO, KADEN_RELOAD, ATTACK_COOLDOWN_TICKS,
-						KADEN_RANGE, KADEN_SUPER_RANGE, KADEN_SUPER_PER_HIT, "アタッカー"),
-				new BrawlerDef("gouen", "ホグリン（タンク）", GOUEN_HP, GOUEN_SPEED, MAX_AMMO, GOUEN_RELOAD, ATTACK_COOLDOWN_TICKS,
+				new BrawlerDef("gouen", "ウシ（タンク）", GOUEN_HP, GOUEN_SPEED, MAX_AMMO, GOUEN_RELOAD, ATTACK_COOLDOWN_TICKS,
 						GOUEN_RANGE, GOUEN_SUPER_DASH_TILES, GOUEN_SUPER_PER_HIT, "タンク"),
 				new BrawlerDef("mimosa", "ブレイズ（スナイパー）", MIMOSA_HP, MIMOSA_SPEED, MAX_AMMO, MIMOSA_RELOAD, ATTACK_COOLDOWN_TICKS,
 						MIMOSA_RANGE, MIMOSA_SUPER_CENTER_TILES, MIMOSA_SUPER_PER_HIT, "スナイパー"),
-				new BrawlerDef("takomaru", "アイアンゴーレム（タンク）", TAKOMARU_HP, TAKOMARU_SPEED, MAX_AMMO, TAKOMARU_RELOAD, ATTACK_COOLDOWN_TICKS,
-						TAKOMARU_RANGE, TAKOMARU_SUPER_JUMP_TILES, TAKOMARU_SUPER_PER_HIT, "タンク"),
+				new BrawlerDef("frank", "アイアンゴーレム（タンク）", FRANK_HP, FRANK_SPEED, MAX_AMMO, FRANK_RELOAD, ATTACK_COOLDOWN_TICKS,
+						FRANK_RANGE, FRANK_SUPER_RANGE, FRANK_SUPER_PER_HIT, "タンク"),
+				new BrawlerDef("darryl", "カッパーゴーレム（タンク）", DARRYL_HP, DARRYL_SPEED, MAX_AMMO, DARRYL_RELOAD, ATTACK_COOLDOWN_TICKS,
+						DARRYL_RANGE, DARRYL_SUPER_DASH_TILES, DARRYL_SUPER_PER_HIT, "タンク"),
+				new BrawlerDef("poco", "アレイ（サポート）", POCO_HP, POCO_SPEED, MAX_AMMO, POCO_RELOAD, ATTACK_COOLDOWN_TICKS,
+						POCO_RANGE, POCO_SUPER_RANGE, POCO_SUPER_PER_HIT, "サポート"),
+				new BrawlerDef("mortis", "行商人（アサシン）", MORTIS_HP, MORTIS_SPEED, MAX_AMMO, MORTIS_RELOAD, ATTACK_COOLDOWN_TICKS,
+						MORTIS_DASH_TILES, MORTIS_SUPER_RANGE, MORTIS_SUPER_PER_HIT, "アサシン"),
+				new BrawlerDef("edgar", "ウィザースケルトン（アサシン）", EDGAR_HP, EDGAR_SPEED, MAX_AMMO, EDGAR_RELOAD, ATTACK_COOLDOWN_TICKS,
+						EDGAR_RANGE, EDGAR_SUPER_LEAP_TILES, EDGAR_SUPER_PER_HIT, "アサシン"),
+				new BrawlerDef("lou", "スノーゴーレム（コントローラー）", LOU_HP, LOU_SPEED, MAX_AMMO, LOU_RELOAD, ATTACK_COOLDOWN_TICKS,
+						LOU_RANGE, LOU_SUPER_RANGE, LOU_SUPER_PER_HIT, "コントローラー"),
 				new BrawlerDef("nita", "シロクマ（アタッカー）", NITA_HP, NITA_SPEED, MAX_AMMO, NITA_RELOAD, ATTACK_COOLDOWN_TICKS,
 						NITA_RANGE, NITA_SUPER_RANGE, NITA_SUPER_PER_HIT, "アタッカー"),
 				new BrawlerDef("barley", "ウィッチ（グレネーディア）", BARLEY_HP, BARLEY_SPEED, MAX_AMMO, BARLEY_RELOAD, ATTACK_COOLDOWN_TICKS,

@@ -23,6 +23,9 @@ final class HudRenderer {
 		int w = g.guiWidth(), h = g.guiHeight();
 
 		if (match) MatchHud.vignettes(g, mc, w, h);
+		if (HudState.active() && (HudState.statusFlags(mc.player.getId()) & (HudState.ST_STUN | HudState.ST_FREEZE)) != 0) {
+			Ui.vignette(g, w, h, 0x7FD8FF, 0.9f); // 自分がスタン・凍結中: 画面の縁が水色
+		}
 		if (HudState.active()) {
 			overheadBars(g, mc, font, dt, w, h);
 			damagePops(g, mc, font, dt, w, h);
@@ -70,6 +73,11 @@ final class HudRenderer {
 				Ui.text(g, font, cs, ix + 12, sy - 1, 1f, Ui.WHITE, Ui.GREEN_EDGE, Ui.LEFT);
 			}
 			int below = sy + BAR_H + 4;
+			int frost = HudState.frost(b.ids()[i]);
+			if (frost > 0) { // 凍結ゲージ: HPバーの下に水色の細いバー
+				Ui.fatBar(g, sx - BAR_W / 2, sy + BAR_H + 1, BAR_W, 3, Mth.clamp(frost / 100f, 0f, 1f), 0xFF7FD8FF, 0xFF1B3A5C, Ui.NAVY_EDGE, 1);
+				below += 4;
+			}
 			if (self) {
 				Net.HudPayload hud = HudState.hud;
 				if (hud != null) {

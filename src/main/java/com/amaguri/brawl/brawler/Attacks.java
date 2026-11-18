@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -32,7 +35,8 @@ final class Attacks {
 
 	private static final ParticleOptions ORANGE_SPARK = new DustParticleOptions(0xFF8A1E, 0.9f);
 	private static final ParticleOptions ORANGE_SPARK_BIG = new DustParticleOptions(0xFF6A10, 1.3f);
-	private static final ParticleOptions YELLOW_BEAM = new DustParticleOptions(0xFFE82E, 0.8f);
+	private static final ParticleOptions SNOW_DUST = new DustParticleOptions(0xE8F6FF, 1.0f);
+	private static final ParticleOptions BAT_DUST = new DustParticleOptions(0x4A3560, 1.1f);
 
 	private static final ParticleOptions WAVE_DUST = new DustParticleOptions(0xD8ECFF, 1.2f);
 	private static final ParticleOptions POTION_DUST = new DustParticleOptions(0x7A3FA0, 1.0f);
@@ -108,12 +112,6 @@ final class Attacks {
 				fan(lvl, u, yaw, RUSTY_PELLETS, RUSTY_FAN, RUSTY_SPEED_BPT, RUSTY_RANGE, RUSTY_PELLET_RADIUS,
 						RUSTY_DMG, true, false, ORANGE_SPARK, null);
 			}
-			case "kaden" -> {
-				sound(lvl, m, SoundEvents.CROSSBOW_SHOOT, 0.7f, 1.6f);
-				for (int i = 0; i < KADEN_BULLETS; i++) {
-					Tasks.after(i * KADEN_BULLET_INTERVAL_TICKS, () -> coltBullet(lvl, u, yaw, KADEN_DMG, KADEN_RANGE, true, false));
-				}
-			}
 			case "gouen" -> {
 				muzzleFlash(lvl, m, d, ParticleTypes.FLAME);
 				sound(lvl, m, SoundEvents.FIREWORK_ROCKET_BLAST, 1.0f, 0.8f);
@@ -127,12 +125,56 @@ final class Attacks {
 						(l, s, t, p) -> {}, // 命中時のダメージは OnEnd の範囲ダメージに任せる
 						(l, s, p, wall) -> explode(l, u, p, MIMOSA_DMG, true, false));
 			}
-			case "takomaru" -> {
-				Vec3 f = m.add(d.scale(1.0));
-				lvl.sendParticles(ParticleTypes.SWEEP_ATTACK, f.x, f.y, f.z, 1, 0, 0, 0, 0);
-				sound(lvl, m, SoundEvents.PLAYER_ATTACK_STRONG, 1.0f, 0.8f);
-				fan(lvl, u, yaw, TAKOMARU_PUNCHES, TAKOMARU_FAN, TAKOMARU_SPEED_BPT, TAKOMARU_RANGE, TAKOMARU_PUNCH_RADIUS,
-						TAKOMARU_DMG, true, false, ParticleTypes.CRIT, null);
+			case "frank" -> frankSlam(lvl, u, yaw, false);
+			case "darryl" -> {
+				sound(lvl, m, SoundEvents.COPPER_GOLEM_HURT, 0.9f, 0.7f);
+				for (int v = 0; v < DARRYL_VOLLEYS; v++) {
+					Tasks.after(v * DARRYL_VOLLEY_INTERVAL_TICKS, () -> {
+						if (!active(u) || !Combat.canAct(u)) return;
+						Vec3 mm = muzzle(u, d);
+						muzzleFlash(lvl, mm, d, ParticleTypes.FLAME);
+						sound(lvl, mm, SoundEvents.FIREWORK_ROCKET_BLAST, 0.9f, 0.9f);
+						fan(lvl, u, yaw, DARRYL_PELLETS, DARRYL_FAN, DARRYL_SPEED_BPT, DARRYL_RANGE, DARRYL_PELLET_RADIUS,
+								DARRYL_DMG, true, false, ORANGE_SPARK, null);
+					});
+				}
+			}
+			case "poco" -> {
+				sound(lvl, m, SoundEvents.NOTE_BLOCK_BELL.value(), 1.0f, 1.2f);
+				sharedFan(lvl, u, yaw, 9, POCO_FAN, POCO_WAVE_SPEED_BPT, POCO_RANGE, POCO_WAVE_RADIUS, POCO_DMG, true, false,
+						ParticleTypes.NOTE, null);
+			}
+			case "mortis" -> {
+				sound(lvl, m, SoundEvents.BAT_TAKEOFF, 1.0f, 1.2f);
+				dash(lvl, u, d, MORTIS_DASH_TILES, MORTIS_DASH_TICKS, MORTIS_DMG, 0, MORTIS_DASH_HIT_RADIUS_BLOCKS, false, true, null);
+			}
+			case "edgar" -> {
+				for (int i = 0; i < EDGAR_PUNCHES; i++) {
+					Tasks.after(i * EDGAR_PUNCH_INTERVAL_TICKS, () -> {
+						if (!active(u) || !Combat.canAct(u)) return;
+						Vec3 mm = muzzle(u, d);
+						Vec3 f = mm.add(d.scale(1.0));
+						lvl.sendParticles(ParticleTypes.SWEEP_ATTACK, f.x, f.y, f.z, 1, 0, 0, 0, 0);
+						sound(lvl, mm, SoundEvents.PLAYER_ATTACK_SWEEP, 0.8f, 1.3f);
+						shoot(lvl, u, yaw, EDGAR_PUNCH_SPEED_BPT, EDGAR_RANGE, EDGAR_PUNCH_RADIUS, EDGAR_DMG, true, false,
+								ParticleTypes.CRIT, null, null);
+					});
+				}
+			}
+			case "lou" -> {
+				for (int i = 0; i < LOU_BALLS; i++) {
+					Tasks.after(i * LOU_BALL_INTERVAL_TICKS, () -> {
+						if (!active(u) || !Combat.canAct(u)) return;
+						Vec3 mm = muzzle(u, d);
+						sound(lvl, mm, SoundEvents.SNOW_GOLEM_SHOOT, 0.8f, 1.1f);
+						shoot(lvl, u, yaw, LOU_BALL_SPEED_BPT, LOU_RANGE, LOU_BALL_RADIUS, LOU_DMG, true, false, SNOW_DUST,
+								(l, sh, t, p) -> {
+									Combat.damage(t, u, LOU_DMG, true);
+									Combat.addFrost(t, LOU_FROST_PER_HIT);
+									l.sendParticles(ParticleTypes.SNOWFLAKE, p.x, p.y, p.z, 8, 0.25, 0.25, 0.25, 0.04);
+								}, null);
+					});
+				}
 			}
 			case "nita" -> {
 				Vec3 f = m.add(d.scale(0.8));
@@ -155,14 +197,6 @@ final class Attacks {
 		Vec3 f = m.add(d.scale(0.4));
 		lvl.sendParticles(p, f.x, f.y, f.z, 6, 0.15, 0.1, 0.15, 0.03);
 		lvl.sendParticles(ParticleTypes.CRIT, f.x, f.y, f.z, 6, 0.2, 0.15, 0.2, 0.2);
-	}
-
-	private static void coltBullet(ServerLevel lvl, LivingEntity u, float yaw, int dmg, double rangeTiles, boolean main, boolean breaks) {
-		if (!active(u)) return;
-		double off = (lvl.getRandom().nextDouble() * 2 - 1) * KADEN_SCATTER_DEG;
-		Vec3 m = muzzle(u, dir(yaw));
-		sound(lvl, m, SoundEvents.DISPENSER_LAUNCH, 0.5f, 1.8f);
-		shoot(lvl, u, yaw + off, KADEN_SPEED_BPT, rangeTiles, KADEN_BULLET_RADIUS, dmg, main, breaks, YELLOW_BEAM, null, null);
 	}
 
 	/** ロケットの爆発（範囲ダメージ＋煙・爆発音）。 */
@@ -191,50 +225,220 @@ final class Attacks {
 							Combat.knockback(t, s.dir(), Tiles.b(RUSTY_SUPER_KNOCK_TILES));
 						});
 			}
-			case "kaden" -> {
-				sound(lvl, m, SoundEvents.CROSSBOW_SHOOT, 0.9f, 1.3f);
-				for (int i = 0; i < KADEN_SUPER_BULLETS; i++) {
-					Tasks.after(i * KADEN_BULLET_INTERVAL_TICKS,
-							() -> coltBullet(lvl, u, yaw, KADEN_SUPER_DMG, KADEN_SUPER_RANGE, false, true));
-				}
+			case "gouen" -> {
+				sound(lvl, u.position(), SoundEvents.IRON_GOLEM_ATTACK, 1.0f, 0.6f);
+				dash(lvl, u, d, GOUEN_SUPER_DASH_TILES, GOUEN_SUPER_DASH_TICKS, GOUEN_SUPER_DMG, GOUEN_SUPER_KNOCK_TILES,
+						GOUEN_SUPER_HIT_RADIUS_BLOCKS, true, false, null);
 			}
-			case "gouen" -> bullDash(lvl, u, d);
+			case "frank" -> frankSlam(lvl, u, yaw, true);
+			case "darryl" -> {
+				sound(lvl, u.position(), SoundEvents.BARREL_OPEN, 1.0f, 0.6f);
+				dash(lvl, u, d, DARRYL_SUPER_DASH_TILES, DARRYL_SUPER_DASH_TICKS, DARRYL_SUPER_DMG, DARRYL_SUPER_KNOCK_TILES,
+						DARRYL_SUPER_HIT_RADIUS_BLOCKS, false, false, null);
+			}
+			case "poco" -> pocoHeal(lvl, u, yaw);
+			case "mortis" -> mortisBats(lvl, u, yaw);
+			case "edgar" -> edgarLeap(lvl, u, d);
+			case "lou" -> iceFloor(lvl, u, d);
 			case "mimosa" -> brockRain(lvl, u, d);
-			case "takomaru" -> elprimoJump(lvl, u, d);
 			case "nita" -> summonBear(lvl, u, d);
 			case "barley" -> potionRain(lvl, u, d);
 			default -> {}
 		}
 	}
 
-	private static void bullDash(ServerLevel lvl, LivingEntity u, Vec3 d) {
-		double perTick = Tiles.b(GOUEN_SUPER_DASH_TILES) / GOUEN_SUPER_DASH_TICKS;
+	/**
+	 * 突進（共通）。tiles タイルを ticks tick で進み、触れた敵に dmg と押し出し（knockTiles>0 のとき）。
+	 * breaks=true なら進行方向の壁を壊し、false なら壁で止まる。スタン・凍結・脱落で中断。
+	 */
+	private static void dash(ServerLevel lvl, LivingEntity u, Vec3 d, double tiles, int ticks, int dmg, double knockTiles,
+			double hitRadiusBlocks, boolean breaks, boolean main, Consumer<LivingEntity> onHit) {
+		double perTick = Tiles.b(tiles) / ticks;
 		Set<LivingEntity> hit = new HashSet<>();
 		int[] t = {0};
-		sound(lvl, u.position(), SoundEvents.IRON_GOLEM_ATTACK, 1.0f, 0.6f);
 		Tasks.add(() -> {
-			if (!active(u) || t[0]++ >= GOUEN_SUPER_DASH_TICKS) return true;
+			if (!active(u) || Combat.disabled(u) || t[0]++ >= ticks) return true;
 			Vec3 p = u.position();
+			if (!breaks && blocked(lvl, p.add(d.scale(perTick + 0.6)))) return true; // 壁で止まる
+			Combat.markPush(u, 3);
 			u.setDeltaMovement(d.x * perTick, u.getDeltaMovement().y, d.z * perTick);
 			u.hurtMarked = true; // プレイヤーにも速度を同期
 			lvl.sendParticles(ParticleTypes.POOF, p.x, p.y + 0.2, p.z, 3, 0.3, 0.1, 0.3, 0.02);
 			lvl.sendParticles(ParticleTypes.CRIT, p.x, p.y + 1.0, p.z, 2, 0.3, 0.3, 0.3, 0.1);
-			// 進行方向の壁を壊す（弾ではないので自前で）
-			for (double k = 1.5; k <= 3.0; k += 1.5) {
-				Vec3 q = p.add(d.scale(k));
-				Arena.breakTile(lvl, BlockPos.containing(q.x, q.y + 0.5, q.z));
-				Arena.breakTile(lvl, BlockPos.containing(q.x, q.y + 1.5, q.z));
+			if (breaks) {
+				// 進行方向の壁を壊す（弾ではないので自前で）
+				for (double k = 1.5; k <= 3.0; k += 1.5) {
+					Vec3 q = p.add(d.scale(k));
+					Arena.breakTile(lvl, BlockPos.containing(q.x, q.y + 0.5, q.z));
+					Arena.breakTile(lvl, BlockPos.containing(q.x, q.y + 1.5, q.z));
+				}
 			}
-			double r2 = GOUEN_SUPER_HIT_RADIUS_BLOCKS * GOUEN_SUPER_HIT_RADIUS_BLOCKS;
+			double r2 = hitRadiusBlocks * hitRadiusBlocks;
 			for (LivingEntity e : new ArrayList<>(Combat.participants(lvl))) {
 				if (e == u || Combat.sameSide(u, e) || hit.contains(e) || e.position().distanceToSqr(p) > r2) continue;
 				hit.add(e);
-				Combat.damage(e, u, GOUEN_SUPER_DMG, false);
-				Combat.knockback(e, d, Tiles.b(GOUEN_SUPER_KNOCK_TILES));
+				Combat.damage(e, u, dmg, main);
+				if (knockTiles > 0) Combat.knockback(e, d, Tiles.b(knockTiles));
+				if (onHit != null) onHit.accept(e);
 				sound(lvl, e.position(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.0f, 0.8f);
 			}
 			return false;
 		});
+	}
+
+	/**
+	 * 扇状に n 発の貫通弾を撃つが、同じ敵には1回しか当てない（1発の広い衝撃波として扱う）。
+	 * extra は命中した敵ごとに（ダメージの後に）呼ぶ。null 可。
+	 */
+	private static void sharedFan(ServerLevel lvl, LivingEntity u, float yaw, int n, double fanDeg, double speed, double rangeTiles,
+			double radius, int dmg, boolean main, boolean breaks, ParticleOptions trail, Consumer<LivingEntity> extra) {
+		Set<UUID> seen = new HashSet<>();
+		double step = n > 1 ? fanDeg / (n - 1) : 0;
+		for (int i = 0; i < n; i++) {
+			double off = n > 1 ? -fanDeg / 2 + step * i : 0;
+			Vec3 d = dir(yaw + off);
+			Projectiles.spawn(lvl, new Shot(u, muzzle(u, d), d, speed, Tiles.b(rangeTiles), radius, dmg, main, breaks, true, trail,
+					(l, sh, t, p) -> {
+						if (!seen.add(t.getUUID())) return;
+						Combat.damage(t, u, dmg, main);
+						if (extra != null) extra.accept(t);
+					}, null));
+		}
+	}
+
+	// ---------- フランク: ハンマー（溜め1.3秒・動けない）／必殺は即時の衝撃波でスタン ----------
+
+	private static void frankSlam(ServerLevel lvl, LivingEntity u, float yaw, boolean isSuper) {
+		if (isSuper) {
+			Vec3 m = muzzle(u, dir(yaw));
+			sound(lvl, m, SoundEvents.ANVIL_LAND, 1.0f, 0.6f);
+			lvl.sendParticles(ParticleTypes.EXPLOSION, m.x + dir(yaw).x * 2, m.y - 0.5, m.z + dir(yaw).z * 2, 1, 0, 0, 0, 0);
+			sharedFan(lvl, u, yaw, 13, FRANK_FAN + 10, FRANK_BULLET_SPEED_BPT, FRANK_SUPER_RANGE, FRANK_BULLET_RADIUS, FRANK_SUPER_DMG,
+					false, true, ParticleTypes.CRIT, t -> Combat.stun(t, FRANK_SUPER_STUN_TICKS));
+			return;
+		}
+		int token = Combat.beginCharge(u, FRANK_CHARGE_TICKS);
+		sound(lvl, u.position(), SoundEvents.IRON_GOLEM_ATTACK, 1.0f, 0.5f);
+		int[] t = {0};
+		Tasks.add(() -> {
+			if (!Combat.chargeValid(u, token)) return true; // スタンなどで中断
+			Vec3 p = u.position();
+			if (t[0] % 4 == 0) lvl.sendParticles(ParticleTypes.CRIT, p.x, p.y + 2.2, p.z, 3, 0.3, 0.2, 0.3, 0.1);
+			if (++t[0] < FRANK_CHARGE_TICKS) return false;
+			Combat.endCharge(u);
+			Vec3 d = dir(yaw);
+			Vec3 m = muzzle(u, d);
+			sound(lvl, m, SoundEvents.ANVIL_LAND, 0.9f, 0.9f);
+			lvl.sendParticles(ParticleTypes.SWEEP_ATTACK, m.x + d.x * 2, m.y - 0.3, m.z + d.z * 2, 1, 0, 0, 0, 0);
+			sharedFan(lvl, u, yaw, 11, FRANK_FAN, FRANK_BULLET_SPEED_BPT, FRANK_RANGE, FRANK_BULLET_RADIUS, FRANK_DMG, true, false,
+					ParticleTypes.CRIT, null);
+			return true;
+		});
+	}
+
+	// ---------- ポコ: 回復の扇（ソロでは自分と自分の召喚物） ----------
+
+	private static void pocoHeal(ServerLevel lvl, LivingEntity u, float yaw) {
+		Vec3 p = u.position();
+		Combat.heal(u, POCO_SUPER_HEAL);
+		for (LivingEntity e : Combat.participants(lvl)) {
+			// 味方の概念があるのは召喚物（ニタのクマ）だけ。近くにいれば回復
+			if (e != u && Combat.sameSide(u, e) && e.position().distanceToSqr(p) <= Tiles.b(POCO_SUPER_RANGE) * Tiles.b(POCO_SUPER_RANGE)) {
+				Combat.heal(e, POCO_SUPER_HEAL);
+				lvl.sendParticles(ParticleTypes.HEART, e.getX(), e.getY() + 1.8, e.getZ(), 5, 0.4, 0.3, 0.4, 0.0);
+			}
+		}
+		lvl.sendParticles(ParticleTypes.HEART, u.getX(), u.getY() + 2.0, u.getZ(), 8, 0.5, 0.3, 0.5, 0.0);
+		sound(lvl, p, SoundEvents.AMETHYST_BLOCK_CHIME, 1.2f, 1.0f);
+		sound(lvl, p, SoundEvents.PLAYER_LEVELUP, 0.7f, 1.4f);
+		sharedFan(lvl, u, yaw, 13, POCO_SUPER_FAN, POCO_WAVE_SPEED_BPT, POCO_SUPER_RANGE, POCO_WAVE_RADIUS, POCO_SUPER_DMG, false, false,
+				ParticleTypes.NOTE, null);
+	}
+
+	// ---------- モーティス: コウモリの群れ（当たった敵ごとに回復） ----------
+
+	private static void mortisBats(ServerLevel lvl, LivingEntity u, float yaw) {
+		Vec3 m = muzzle(u, dir(yaw));
+		sound(lvl, m, SoundEvents.BAT_TAKEOFF, 1.0f, 0.8f);
+		sound(lvl, m, SoundEvents.BAT_AMBIENT, 0.8f, 0.9f);
+		sharedFan(lvl, u, yaw, 9, MORTIS_SUPER_FAN, MORTIS_BAT_SPEED_BPT, MORTIS_SUPER_RANGE, MORTIS_BAT_RADIUS, MORTIS_SUPER_DMG, false, false,
+				BAT_DUST, t -> {
+					Combat.heal(u, MORTIS_SUPER_HEAL_PER_HIT);
+					lvl.sendParticles(ParticleTypes.HEART, u.getX(), u.getY() + 1.8, u.getZ(), 2, 0.3, 0.2, 0.3, 0.0);
+				});
+	}
+
+	// ---------- エドガー: 跳躍（壁を越える）→ 着地後に加速 ----------
+
+	private static void edgarLeap(ServerLevel lvl, LivingEntity u, Vec3 d) {
+		// 向きしか分からないので、正面の敵がいればその手前に降りる（lobDistance と同じ考え方）
+		double max = Tiles.b(EDGAR_SUPER_LEAP_TILES);
+		double dist = Math.min(max, Math.max(1.0, aimDistance(lvl, u, d, max) - 1.2));
+		leap(lvl, u, d, dist, EDGAR_SUPER_FLIGHT_TICKS, EDGAR_SUPER_HEIGHT_BLOCKS, land -> {
+			Combat.haste(u, EDGAR_HASTE_TICKS, Tiles.b(EDGAR_HASTE_TILES_PER_SEC));
+			lvl.sendParticles(ParticleTypes.POOF, land.x, land.y + 0.2, land.z, 12, 0.5, 0.1, 0.5, 0.08);
+			sound(lvl, land, SoundEvents.WITHER_SKELETON_HURT, 0.7f, 1.4f);
+		});
+	}
+
+	/** 放物線で跳ぶ（壁・敵を越える）。着地点が壁の中なら手前に戻す。スタン・脱落で中断（その場に落ちる）。 */
+	private static void leap(ServerLevel lvl, LivingEntity u, Vec3 d, double distBlocks, int flightTicks, double heightBlocks,
+			Consumer<Vec3> onLand) {
+		Vec3 start = u.position();
+		double dist = distBlocks;
+		Vec3 end = start.add(d.scale(dist));
+		while (dist > 0 && blocked(lvl, end)) {
+			dist -= 0.5;
+			end = start.add(d.scale(dist));
+		}
+		if (dist <= 0) end = start;
+		final Vec3 land = end;
+		int[] t = {0};
+		sound(lvl, start, SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.0f, 0.6f);
+		Tasks.add(() -> {
+			if (!active(u) || Combat.disabled(u)) return true;
+			t[0]++;
+			double f = Math.min(1.0, t[0] / (double) flightTicks);
+			double y = start.y + 4 * heightBlocks * f * (1 - f);
+			Combat.markPush(u, 3);
+			moveTo(u, start.x + (land.x - start.x) * f, y, start.z + (land.z - start.z) * f);
+			lvl.sendParticles(ParticleTypes.CLOUD, u.getX(), u.getY() + 0.2, u.getZ(), 3, 0.3, 0.1, 0.3, 0.02);
+			if (t[0] < flightTicks) return false;
+			moveTo(u, land.x, land.y, land.z);
+			onLand.accept(land);
+			return true;
+		});
+	}
+
+	/** 正面±12度で max ブロック以内の一番近い敵（茂みで隠れていない）までの距離。居なければ max。 */
+	private static double aimDistance(ServerLevel lvl, LivingEntity u, Vec3 d, double max) {
+		double best = max;
+		double cos = Math.cos(Math.toRadians(12));
+		for (LivingEntity e : Combat.participants(lvl)) {
+			if (e == u || Combat.sameSide(u, e) || Combat.isHiddenFrom(e, u)) continue;
+			Vec3 to = e.position().subtract(u.position()).multiply(1, 0, 1);
+			double len = to.length();
+			if (len < 0.5 || len > max) continue;
+			if (to.scale(1.0 / len).dot(d) >= cos && len < best) best = len;
+		}
+		return best;
+	}
+
+	// ---------- ルー: 氷の床 ----------
+
+	private static void iceFloor(ServerLevel lvl, LivingEntity u, Vec3 d) {
+		// 向きしか分からないので、正面の敵がいればその位置（最大8タイル）に敷く
+		double max = Tiles.b(LOU_SUPER_RANGE);
+		double dist = Math.max(1.5, aimDistance(lvl, u, d, max));
+		Vec3 p = u.position().add(d.scale(dist));
+		while (dist > 1.0 && blocked(lvl, p)) {
+			dist -= 0.5;
+			p = u.position().add(d.scale(dist));
+		}
+		if (dist <= 1.0) p = u.position().add(d.scale(1.0));
+		sound(lvl, p, SoundEvents.GLASS_BREAK, 1.0f, 1.5f);
+		lvl.sendParticles(ParticleTypes.SNOWFLAKE, p.x, p.y + 0.5, p.z, 25, 1.0, 0.4, 1.0, 0.05);
+		Combat.addIceFloor(lvl, u, p, Tiles.b(LOU_FLOOR_RADIUS_TILES), LOU_FLOOR_TICKS, LOU_SLOW_TICKS, LOU_SLOW_MUL, LOU_STOP_TICKS);
 	}
 
 	private static void brockRain(ServerLevel lvl, LivingEntity u, Vec3 d) {
@@ -261,52 +465,6 @@ final class Attacks {
 				});
 			});
 		}
-	}
-
-	private static void elprimoJump(ServerLevel lvl, LivingEntity u, Vec3 d) {
-		Vec3 start = u.position();
-		// 着地点: 最大6タイル先。壁の中なら手前に戻す
-		double dist = Tiles.b(TAKOMARU_SUPER_JUMP_TILES);
-		Vec3 end = start.add(d.scale(dist));
-		while (dist > 0 && blocked(lvl, end)) {
-			dist -= 0.5;
-			end = start.add(d.scale(dist));
-		}
-		if (dist <= 0) end = start;
-		final Vec3 land = end;
-		int T = TAKOMARU_SUPER_FLIGHT_TICKS;
-		int[] t = {0};
-		sound(lvl, start, SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.0f, 0.6f);
-		Tasks.add(() -> {
-			if (!active(u)) return true;
-			t[0]++;
-			double f = Math.min(1.0, t[0] / (double) T);
-			double y = start.y + 4 * TAKOMARU_SUPER_JUMP_HEIGHT_BLOCKS * f * (1 - f);
-			moveTo(u, start.x + (land.x - start.x) * f, y, start.z + (land.z - start.z) * f);
-			lvl.sendParticles(ParticleTypes.CLOUD, u.getX(), u.getY() + 0.2, u.getZ(), 3, 0.3, 0.1, 0.3, 0.02);
-			if (t[0] < T) return false;
-			// 着地
-			moveTo(u, land.x, land.y, land.z);
-			double r = Tiles.b(TAKOMARU_SUPER_RADIUS_TILES);
-			List<LivingEntity> near = new ArrayList<>();
-			for (LivingEntity e : Combat.participants(lvl)) {
-				if (e != u && !Combat.sameSide(u, e) && e.position().distanceToSqr(land) <= r * r) near.add(e);
-			}
-			lvl.sendParticles(ParticleTypes.EXPLOSION, land.x, land.y + 0.3, land.z, 2, 0.6, 0.1, 0.6, 0);
-			lvl.sendParticles(ParticleTypes.POOF, land.x, land.y + 0.2, land.z, 20, r * 0.5, 0.1, r * 0.5, 0.1);
-			sound(lvl, land, SoundEvents.GENERIC_BIG_FALL, 1.0f, 0.7f);
-			sound(lvl, land, SoundEvents.ANVIL_LAND, 0.8f, 0.8f);
-			Combat.areaDamage(lvl, u, land, r, TAKOMARU_SUPER_DMG, false);
-			for (LivingEntity e : near) {
-				BrawlState st = Combat.state(e);
-				if (st == null || !st.alive) continue;
-				Vec3 away = e.position().subtract(land).multiply(1, 0, 1);
-				Vec3 kd = away.lengthSqr() < 1e-4 ? d : away.normalize();
-				Combat.knockback(e, kd, Tiles.b(TAKOMARU_SUPER_KNOCK_TILES));
-			}
-			breakWallsAround(lvl, land, r);
-			return true;
-		});
 	}
 
 	// ---------- ニタ: 相棒のクマ ----------

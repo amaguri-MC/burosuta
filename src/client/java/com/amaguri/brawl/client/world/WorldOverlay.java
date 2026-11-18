@@ -56,6 +56,14 @@ public final class WorldOverlay {
 			}
 		}
 
+		if (HudState.active() && !HudState.statusIds().isEmpty()) {
+			final float pt = partial;
+			ps.pushPose();
+			ctx.submitNodeCollector().submitCustomGeometry(ps, RenderTypes.debugQuads(),
+					(pose, vc) -> drawStatuses(pose, vc, cam, mc, pt));
+			ps.popPose();
+		}
+
 		if (TopDown.active()) {
 			String id = null;
 			if (HudState.hud != null && !HudState.hud.brawler().isEmpty()) id = HudState.hud.brawler();
@@ -147,6 +155,56 @@ public final class WorldOverlay {
 		v(p, vc, cam, o.x + dx * d0 + px, y, o.z + dz * d0 + pz, c0);
 		v(p, vc, cam, o.x + dx * d1 + px, y, o.z + dz * d1 + pz, c1);
 		v(p, vc, cam, o.x + dx * d1 - px, y, o.z + dz * d1 - pz, c1);
+	}
+
+	// ---- 状態異常: 凍結=水色の氷の箱 / スタン=頭上を回る黄色い星 / 減速=足元の青い輪（人形でも自作モデルでも同じ） ----
+
+	private static void drawStatuses(PoseStack.Pose p, VertexConsumer vc, Vec3 cam, Minecraft mc, float pt) {
+		float time = HudState.tick + pt;
+		for (int id : HudState.statusIds()) {
+			int fl = HudState.statusFlags(id);
+			if ((fl & (HudState.ST_STUN | HudState.ST_FREEZE | HudState.ST_SLOW)) == 0) continue;
+			net.minecraft.world.entity.Entity e = mc.level.getEntity(id);
+			if (e == null || e.isRemoved() || HudState.isHidden(e)) continue;
+			double x = net.minecraft.util.Mth.lerp(pt, e.xo, e.getX());
+			double y = net.minecraft.util.Mth.lerp(pt, e.yo, e.getY());
+			double z = net.minecraft.util.Mth.lerp(pt, e.zo, e.getZ());
+			double top = 1.95; // 見た目の高さ（人形は約1.9に揃えてある）
+			if ((fl & HudState.ST_FREEZE) != 0) { // 氷づけ: 少し大きめの水色の半透明の箱
+				box(p, vc, cam, x - 0.5, y - 0.02, z - 0.5, x + 0.5, y + top + 0.08, z + 0.5, argb(0.42f, 0.55f, 0.85f, 1f));
+			}
+			if ((fl & HudState.ST_STUN) != 0) { // 星 3つが頭上を回る
+				for (int k = 0; k < 3; k++) {
+					double a = time * 0.25 + k * (Math.PI * 2 / 3);
+					double sx = x + Math.cos(a) * 0.45, sz = z + Math.sin(a) * 0.45, sy = y + top + 0.3 + Math.sin(time * 0.2 + k) * 0.05;
+					box(p, vc, cam, sx - 0.08, sy - 0.08, sz - 0.08, sx + 0.08, sy + 0.08, sz + 0.08, argb(1f, 1f, 0.9f, 0.1f));
+				}
+			}
+			if ((fl & HudState.ST_SLOW) != 0) { // 足元の青い輪
+				ring(p, vc, cam, x, y + 0.06, z, 0.62, 0.8, argb(0.7f, 0.25f, 0.55f, 1f));
+			}
+		}
+	}
+
+	private static void ring(PoseStack.Pose p, VertexConsumer vc, Vec3 cam, double cx, double y, double cz, double r0, double r1, int c) {
+		final int n = 24;
+		for (int i = 0; i < n; i++) {
+			double a0 = Math.PI * 2 * i / n, a1 = Math.PI * 2 * (i + 1) / n;
+			v(p, vc, cam, cx + Math.cos(a0) * r0, y, cz + Math.sin(a0) * r0, c);
+			v(p, vc, cam, cx + Math.cos(a0) * r1, y, cz + Math.sin(a0) * r1, c);
+			v(p, vc, cam, cx + Math.cos(a1) * r1, y, cz + Math.sin(a1) * r1, c);
+			v(p, vc, cam, cx + Math.cos(a1) * r0, y, cz + Math.sin(a1) * r0, c);
+		}
+	}
+
+	/** 6面の箱（面ごとに4頂点）。 */
+	private static void box(PoseStack.Pose p, VertexConsumer vc, Vec3 cam, double x0, double y0, double z0, double x1, double y1, double z1, int c) {
+		v(p, vc, cam, x0, y0, z0, c); v(p, vc, cam, x1, y0, z0, c); v(p, vc, cam, x1, y0, z1, c); v(p, vc, cam, x0, y0, z1, c); // 下
+		v(p, vc, cam, x0, y1, z0, c); v(p, vc, cam, x0, y1, z1, c); v(p, vc, cam, x1, y1, z1, c); v(p, vc, cam, x1, y1, z0, c); // 上
+		v(p, vc, cam, x0, y0, z0, c); v(p, vc, cam, x0, y1, z0, c); v(p, vc, cam, x1, y1, z0, c); v(p, vc, cam, x1, y0, z0, c); // 北
+		v(p, vc, cam, x0, y0, z1, c); v(p, vc, cam, x1, y0, z1, c); v(p, vc, cam, x1, y1, z1, c); v(p, vc, cam, x0, y1, z1, c); // 南
+		v(p, vc, cam, x0, y0, z0, c); v(p, vc, cam, x0, y0, z1, c); v(p, vc, cam, x0, y1, z1, c); v(p, vc, cam, x0, y1, z0, c); // 西
+		v(p, vc, cam, x1, y0, z0, c); v(p, vc, cam, x1, y1, z0, c); v(p, vc, cam, x1, y1, z1, c); v(p, vc, cam, x1, y0, z1, c); // 東
 	}
 
 	// ---- 共通 ----

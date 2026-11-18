@@ -33,7 +33,7 @@ final class LobbyEntities {
 	static final String TAG_STATUE = "brawl_lobby_statue";
 	static final String TAG_DUMMY = "brawl_lobby_dummy";
 	/** カカシのキャラ（北→南）。 */
-	static final String[] DUMMY_BRAWLERS = {"gouen", "kaden", "takomaru"};
+	static final String[] DUMMY_BRAWLERS = {"gouen", "frank", "darryl"};
 
 	private static BrawlBot[] statues = new BrawlBot[0];
 	private static BrawlBot[] dummies = new BrawlBot[0];
@@ -103,7 +103,7 @@ final class LobbyEntities {
 			if (statueNames[k] == null || statueNames[k].isRemoved()) {
 				MutableComponent name = Component.literal(def.nameJa()).withStyle(ChatFormatting.BOLD, ChatFormatting.GOLD);
 				name.append(Component.literal("\n" + def.roleJa()).withStyle(ChatFormatting.WHITE));
-				statueNames[k] = LobbyText.spawn(lvl, p.add(0, 2.35, 0), name, 3.0f, 160, TAG);
+				statueNames[k] = LobbyText.spawn(lvl, p.add(0, 2.35, 0), name, 2.2f, 160, TAG);
 			}
 		}
 		// カカシ

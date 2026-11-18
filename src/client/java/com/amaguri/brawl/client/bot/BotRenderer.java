@@ -20,6 +20,7 @@ import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
 
 import com.amaguri.brawl.bot.BrawlBot;
+import com.amaguri.brawl.client.model.MobPuppets;
 
 /** ボットを、バニラ既定スキン（Steve/Alex 系を UUID から決める）のプレイヤー姿で描く。名前タグはボット名。 */
 public class BotRenderer extends LivingEntityRenderer<BrawlBot, AvatarRenderState, PlayerModel> {
@@ -88,6 +89,10 @@ public class BotRenderer extends LivingEntityRenderer<BrawlBot, AvatarRenderStat
 
 	@Override
 	public void submit(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera) {
+		// キャラの人形（バニラのモブ）があればそれを描く。人形が作れない/対応が無いときだけ、下の元のプレイヤー型ボットの見た目
+		if (MobPuppets.submitInRenderer(state, poseStack, collector, camera)) {
+			return;
+		}
 		// 太い腕/細い腕のモデルは submit 時に選ぶ（extract は全員分が先に走るため）
 		this.model = state.skin.model() == PlayerModelType.SLIM ? this.slimModel : this.wideModel;
 		super.submit(state, poseStack, collector, camera);

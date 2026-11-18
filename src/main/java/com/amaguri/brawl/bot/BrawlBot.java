@@ -218,6 +218,11 @@ public class BrawlBot extends PathfinderMob {
 		}
 		setSprinting(false);
 		if (isNoAi()) return;
+		// スタン・凍結・溜め中（frank のハンマー）は動かない・撃たない（移動速度は core が0にする）
+		if (Combat.immobile(this)) {
+			getNavigation().stop();
+			return;
+		}
 		if (st.ownerId != null) {
 			thinkSummon(lvl, st);
 			return;
@@ -279,7 +284,12 @@ public class BrawlBot extends PathfinderMob {
 		trackZone(lvl);
 		checkStuck();
 		double rangeB = Tiles.b(def.attackRangeTiles());
-		LivingEntity target = findTarget(lvl, rangeB * 1.2);
+		double searchB = rangeB * 1.2;
+		if (st.superCharge >= 1.0f && "edgar,darryl,mortis,lou".contains(brawlerId)) {
+			// 突っ込む・跳ぶ・氷の床は、通常攻撃の射程より遠い敵にも使うので、必殺が溜まっていれば広く探す
+			searchB = Math.max(searchB, Tiles.b(def.superRangeTiles()) * 0.95);
+		}
+		LivingEntity target = findTarget(lvl, searchB);
 		boolean danger = inDanger(lvl);
 
 		// 狙う相手が切り替わったら反応時間を置く
@@ -379,13 +389,14 @@ public class BrawlBot extends PathfinderMob {
 	/** 射程×1.2以内で、茂みに隠れておらず（Combat.isHiddenFrom）、壁に遮られていない一番近い敵。 */
 	private LivingEntity findTarget(ServerLevel lvl, double maxDist) {
 		LivingEntity best = null;
-		double bestD = maxDist * maxDist;
+		double bestScore = Double.MAX_VALUE;
+		boolean lou = "lou".equals(brawlerId);
 		for (LivingEntity e : Combat.participants(lvl)) {
 			if (e == this || !e.isAlive() || Combat.sameSide(this, e)) {
 				continue;
 			}
 			double d = e.distanceToSqr(this);
-			if (d > bestD) {
+			if (d > maxDist * maxDist) {
 				continue;
 			}
 			if (Combat.isHiddenFrom(e, this)) {
@@ -394,8 +405,12 @@ public class BrawlBot extends PathfinderMob {
 			if (!hasLineOfSight(e)) {
 				continue;
 			}
-			best = e;
-			bestD = d;
+			// lou は凍っている・凍結ゲージが溜まっている敵を優先（距離を 0.4 倍に見なす）
+			double score = lou && Combat.isFrostMarked(e) ? d * 0.16 : d;
+			if (score < bestScore) {
+				best = e;
+				bestScore = score;
+			}
 		}
 		return best;
 	}
@@ -436,7 +451,7 @@ public class BrawlBot extends PathfinderMob {
 		double dx = aimAt.x - getX();
 		double dz = aimAt.z - getZ();
 		float yaw = (float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG) + aimError();
-		if (dist <= Tiles.b(def.superRangeTiles()) && st.superCharge >= 1.0f) {
+		if (st.superCharge >= 1.0f && dist <= Tiles.b(def.superRangeTiles()) && wantsSuper(st, dist)) {
 			if (Brawlers.useSuper(this, yaw)) {
 				faceYaw(yaw);
 				return;
@@ -446,6 +461,18 @@ public class BrawlBot extends PathfinderMob {
 			faceYaw(yaw);
 			nextAttackTick = tickCount + Math.max(1, def.attackCooldownTicks());
 		}
+	}
+
+	/** キャラごとの必殺を使う条件（射程内であることは呼ぶ側で確認済み）。 */
+	private boolean wantsSuper(BrawlState st, double distBlocks) {
+		return switch (brawlerId) {
+			case "edgar" -> distBlocks >= 3.0;                  // 敵の近くへ跳ぶ（既に密着なら通常攻撃）
+			case "darryl" -> distBlocks >= 3.0;                 // 樽で突っ込む
+			case "mortis" -> distBlocks >= 3.0;                 // 通常の突進が届かない距離でコウモリ
+			case "lou" -> distBlocks >= Tiles.b(3.0);           // 氷の床は離れた敵に
+			case "poco" -> st.hp < st.maxHp() * 0.7 || distBlocks <= Tiles.b(4.0); // 回復したいとき／近いとき
+			default -> true;
+		};
 	}
 
 	/** 狙いのずれ（度）: easy ±15 / normal ±7 / hard ±3。 */

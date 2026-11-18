@@ -57,6 +57,12 @@ public final class Brawlers {
 		return d != null ? d : SUMMONS.get(id);
 	}
 
+	/** 自動の必殺チャージ（1tickあたり）。 */
+	public static float autoSuperPerTick(String id) { return id == null ? 0f : BrawlerStats.autoSuperPerTick(id); }
+
+	/** 与ダメージのうち回復する割合（ライフスティール）。 */
+	public static float lifesteal(String id) { return id == null ? 0f : BrawlerStats.lifesteal(id); }
+
 	public static List<BrawlerDef> all() { return List.copyOf(DEFS.values()); }
 
 	/** 試合中で生きている参加者の状態。そうでなければ null。 */
@@ -72,6 +78,7 @@ public final class Brawlers {
 		if (st == null) return false;
 		BrawlerDef def = get(st.brawlerId);
 		if (def == null) return false;
+		if (!Combat.canAct(user)) return false; // スタン・凍結・溜め中は撃てない
 		int now = lvl.getServer().getTickCount();
 		Integer last = LAST_ATTACK.get(user.getUUID());
 		if (last != null && now - last < def.attackCooldownTicks()) return false;
@@ -89,6 +96,7 @@ public final class Brawlers {
 		if (st == null) return false;
 		BrawlerDef def = get(st.brawlerId);
 		if (def == null) return false;
+		if (!Combat.canAct(user)) return false; // スタン・凍結・溜め中は必殺も不可
 		if (!Combat.consumeSuper(user)) return false;
 		Attacks.superMove(lvl, user, def.id(), yawDeg);
 		return true;

@@ -92,7 +92,7 @@ public class BrawlGameTests {
 		final int f = FLOOR_HIT;
 		buildStage(h, f);
 		BrawlBot shooter = bot(h, f, 8.5, 3.5, "rusty", "Shooter");
-		BrawlBot target = bot(h, f, 8.5, 9.5, "kaden", "Target");
+		BrawlBot target = bot(h, f, 8.5, 9.5, "mortis", "Target");
 		final int before = Combat.state(target).hp;
 		h.assertTrue(Brawlers.attack(shooter, 0f), "ラスティの通常攻撃が撃てない（弾3発のはず）");
 		h.runAfterDelay(40, () -> {
@@ -285,7 +285,7 @@ public class BrawlGameTests {
 				}
 			}
 		}
-		BrawlBot hider = bot(h, f, 9.0, 12.0, "kaden", "Hider");
+		BrawlBot hider = bot(h, f, 9.0, 12.0, "mortis", "Hider");
 		BrawlBot viewer = bot(h, f, 9.0, 4.0, "rusty", "Viewer");
 		boolean inBush = Combat.inBush(hider);
 		boolean far = Combat.isHiddenFrom(hider, viewer);
@@ -316,7 +316,7 @@ public class BrawlGameTests {
 	public void eliminationHookFiresExactlyOnce(GameTestHelper h) {
 		final int f = FLOOR_ELIM;
 		buildStage(h, f);
-		BrawlBot victim = bot(h, f, 8.5, 8.5, "kaden", "Victim");
+		BrawlBot victim = bot(h, f, 8.5, 8.5, "mortis", "Victim");
 		var original = MatchHooks.onEliminated;
 		int[] count = { 0 };
 		LivingEntity[] seen = { null };

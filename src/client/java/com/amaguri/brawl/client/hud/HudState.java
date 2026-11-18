@@ -35,6 +35,9 @@ public final class HudState {
 	static Set<Integer> hidden = Set.of();
 	static long hiddenTick = -1000;
 	static Set<Integer> barIds = Set.of();
+	/** 状態異常: 実体ID → {flags, frost}。flags: bit0=スタン bit1=凍結 bit2=減速 bit3=氷の床の上。frost: 凍結ゲージ 0〜100。 */
+	static Map<Integer, int[]> status = Map.of();
+	static long statusTick = -1000;
 
 	// ---- 技名のポップアップ ----
 	static String skillText = null;
@@ -76,7 +79,7 @@ public final class HudState {
 
 	static void onHud(Net.HudPayload p) {
 		if (p.brawler().isEmpty()) { // 試合外
-			hud = null; match = null; bars = null; hidden = Set.of(); barIds = Set.of();
+			hud = null; match = null; bars = null; hidden = Set.of(); barIds = Set.of(); status = Map.of();
 			prevMyHp = -1; prevPhase = 0; rankShown = 0;
 			return;
 		}
@@ -140,6 +143,13 @@ public final class HudState {
 		hidden = s; hiddenTick = tick;
 	}
 
+	static void onStatus(Net.StatusPayload p) {
+		Map<Integer, int[]> m = new HashMap<>();
+		int n = Math.min(p.ids().length, Math.min(p.flags().length, p.frost().length));
+		for (int i = 0; i < n; i++) m.put(p.ids()[i], new int[] { p.flags()[i], p.frost()[i] });
+		status = m; statusTick = tick;
+	}
+
 	/** 毎tick: 古いものを捨てる。 */
 	static void tickOnce() {
 		tick++;
@@ -149,8 +159,8 @@ public final class HudState {
 
 	public static void reset() {
 		barIds = Set.of(); skillText = null;
-		hud = null; match = null; bars = null; hidden = Set.of(); lobby = null;
-		hudTick = matchTick = barsTick = hiddenTick = lobbyTick = -1000;
+		hud = null; match = null; bars = null; hidden = Set.of(); lobby = null; status = Map.of();
+		statusTick = -1000; hudTick = matchTick = barsTick = hiddenTick = lobbyTick = -1000;
 		kills.clear(); pops.clear(); lastHp.clear();
 		prevMyHp = -1; prevPhase = 0; lastCountdown = -1; rankShown = 0; lobbyLastCount = -2;
 		hitFlashTick = fightStart = countdownStart = rankStart = -1000;
@@ -202,6 +212,29 @@ public final class HudState {
 	/** バニラの攻撃・使用・ブロック破壊を止めるか。 */
 	public static boolean blockVanillaInput() {
 		return alive();
+	}
+
+	// ---- 状態異常（StatusPayload） ----
+
+	public static final int ST_STUN = 1, ST_FREEZE = 2, ST_SLOW = 4, ST_ICE_FLOOR = 8;
+
+	/** その実体の状態異常ビット。届いていない・古い（1秒以上）なら 0。 */
+	public static int statusFlags(int entityId) {
+		if (tick - statusTick > 20) return 0;
+		int[] v = status.get(entityId);
+		return v == null ? 0 : v[0];
+	}
+
+	/** その実体の凍結ゲージ 0〜100。 */
+	public static int frost(int entityId) {
+		if (tick - statusTick > 20) return 0;
+		int[] v = status.get(entityId);
+		return v == null ? 0 : v[1];
+	}
+
+	/** 状態異常のある実体ID（描画用）。 */
+	public static Set<Integer> statusIds() {
+		return tick - statusTick > 20 ? Set.of() : status.keySet();
 	}
 
 	/** 描画しない実体か（茂みに隠れている）。 */
