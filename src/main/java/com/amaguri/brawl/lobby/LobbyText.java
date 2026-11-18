@@ -24,7 +24,7 @@ public final class LobbyText extends Display.TextDisplay {
 	private static final Logger LOG = LoggerFactory.getLogger("brawl-lobby");
 
 	private LobbyText(Level level) {
-		super(EntityType.TEXT_DISPLAY, level);
+		super(net.minecraft.world.entity.EntityTypes.TEXT_DISPLAY, level);
 	}
 
 	@Override
