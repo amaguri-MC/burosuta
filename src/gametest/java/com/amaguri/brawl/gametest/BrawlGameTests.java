@@ -382,24 +382,27 @@ public class BrawlGameTests {
 		BrawlBot runner = BrawlBot.spawnSummon(h.getLevel(), h.absoluteVec(new Vec3(3.5, f + 1, 3.5)), id, "Runner", owner);
 		h.assertTrue(runner != null && Combat.state(runner) != null, "走らせるボットが作れない");
 		final Vec3 goal = h.absoluteVec(new Vec3(3.5, f + 1, 33.5)); // 30 ブロック先
-		final double[] z = new double[11];
+		final Vec3 start = runner.position();
+		final double[] dist = new double[6];
 		h.onEachTick(() -> {
 			long t = h.getTick();
 			if (t == 1) {
-				runner.getNavigation().moveTo(goal.x, goal.y, goal.z, 1.0);
+				boolean ok = runner.getNavigation().moveTo(goal.x, goal.y, goal.z, 1.0);
+				System.out.println("[BOTSPEED] " + id + " moveTo=" + ok + " dist=" + start.distanceTo(goal));
 			}
-			if (t >= 1 && (t - 1) % 20 == 0 && (t - 1) / 20 < z.length) {
+			if (t >= 1 && (t - 1) % 20 == 0 && (t - 1) / 20 < dist.length) {
 				int i = (int) ((t - 1) / 20);
-				z[i] = runner.getZ();
-				System.out.println("[BOTSPEED] t=" + t + " z=" + runner.getZ() + " x=" + runner.getX() + " y=" + runner.getY() + " ground=" + runner.onGround() + " dm=" + runner.getDeltaMovement()
-						+ " nav=" + runner.getNavigation().isInProgress() + " below=" + h.getLevel().getBlockState(runner.blockPosition().below()));
+				Vec3 p = runner.position();
+				dist[i] = Math.hypot(p.x - start.x, p.z - start.z);
+				System.out.println("[BOTSPEED] " + id + " t=" + t + " d=" + dist[i] + " y=" + runner.getY() + " ground=" + runner.onGround()
+						+ " dm=" + runner.getDeltaMovement() + " nav=" + runner.getNavigation().isInProgress()
+						+ " immobile=" + Combat.immobile(runner) + " attr=" + runner.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED));
 			}
 			if (t == 1 + 20 * 5) {
 				// 2〜5秒目の平均（加速の立ち上がりを除く）
-				double bps = (z[5] - z[1]) / 4.0;
+				double bps = (dist[5] - dist[1]) / 4.0;
 				double ratio = bps / expect;
-				System.out.println("[BOTSPEED] measured=" + bps + " b/s expect=" + expect + " ratio=" + ratio
-						+ " attr=" + runner.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED));
+				System.out.println("[BOTSPEED] " + id + " measured=" + bps + " b/s expect=" + expect + " ratio=" + ratio);
 				cleanup(runner, owner);
 				h.assertTrue(Math.abs(ratio - 1.0) <= 0.10,
 						"ボットの実測速度が キャラの速さと ±10% で一致しない: 実測 " + bps + " b/s / 期待 " + expect + " b/s");
