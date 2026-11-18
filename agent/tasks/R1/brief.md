@@ -2,7 +2,7 @@
 先に agent/tasks/COMMON.md、CONTRACT.md（末尾「第3弾」）、agent/tasks/R1/stats.md を読む。数値は stats.md が正（stats.md の値を BrawlerStats に）。
 担当範囲: src/main/java/com/amaguri/brawl/brawler/**, src/main/java/com/amaguri/brawl/core/**, src/main/java/com/amaguri/brawl/bot/BrawlBot.java（新キャラを使う思考の調整だけ）, src/main/resources/assets/brawl/{items,models/item}/<新id>_weapon.json（テクスチャは既存のものを流用してよい）, agent/lang/R1.json
 やること:
-1. kaden（コルト）を削除（定義・アイテム・ボットの候補から）。takomaru は保留（今のまま残す）。gouen の名前は「ウシ（タンク）」
+1. kaden（コルト）と takomaru（エルプリモ）を削除（定義・アイテム・ボットの候補から）。gouen の名前は「ウシ（タンク）」
 2. 新キャラ6人: frank, darryl, poco, mortis, edgar, lou（名前・クラス・技名は stats.md の対応で、技名はモブらしく付ける）
 3. 新しい仕組み（core に作る）:
    - 状態異常: スタン（移動・攻撃・必殺 不可）、凍結（同じ）、減速（速さ×0.6 など）。プレイヤーにもボットにも効く（プレイヤーは移動速度の属性を0付近＋毎tick 横移動を止める、攻撃は Brawlers.attack が拒否）。`Combat.stun(e, ticks)`, `Combat.freeze(e, ticks)`, `Combat.addFrost(e, pct)`（100で凍結）, `Combat.slow(e, ticks, mul)`
