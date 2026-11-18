@@ -40,7 +40,7 @@ public class BrawlClientTest implements FabricClientGameTest {
 					ms.getPlayerList().getPlayers().get(0), new com.amaguri.brawl.api.Net.OpenSelectPayload("mimosa")));
 			context.waitTicks(40);
 			context.takeScreenshot(TestScreenshotOptions.of("select_screen").disableCounterPrefix());
-			context.runOnClient(c -> c.setScreen(null));
+			context.runOnClient(c -> c.gui.setScreen(null));
 			context.waitTicks(5);
 
 			// --- キャラ5人の並び（試合の外。ボットを置いて正面・背面・自分の三人称） ---
@@ -105,7 +105,7 @@ public class BrawlClientTest implements FabricClientGameTest {
 							new String[] {"rusty", "kaden", "gouen", "mimosa"}, new int[] {1, 2, 3, 4})));
 			context.waitTicks(30);
 			context.takeScreenshot(TestScreenshotOptions.of("result_screen").disableCounterPrefix());
-			context.runOnClient(c -> c.setScreen(null));
+			context.runOnClient(c -> c.gui.setScreen(null));
 			context.waitTicks(40);
 			sp.getConnection().waitForChunksRender();
 			context.takeScreenshot(TestScreenshotOptions.of("lobby_after").disableCounterPrefix());
