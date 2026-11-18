@@ -19,7 +19,11 @@ import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.resources.model.EquipmentAssetManager;
 import net.minecraft.client.resources.model.sprite.AtlasManager;
@@ -28,10 +32,12 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import com.amaguri.brawl.client.model.BrawlerLooks;
 import com.amaguri.brawl.client.model.BrawlerModels;
 import com.amaguri.brawl.client.model.BrawlerRenderer;
+import com.amaguri.brawl.client.model.MobPuppets;
 
 /**
  * priority を小さくして、ボット用(client/bot/mixin/EntityRenderDispatcherMixin)より先に走らせる。
  * 1) 描画器の生成: リロードの最後に、ここで使われるのと同じ Context で BrawlerRenderer を作る。
+ * 0) 人形: キャラに対応するバニラのモブがあれば、submit の入口で本体の状態から人形の状態を作って描き、本体の描画は止める。
  * 2) 振り分け: LooksPayload に載った実体（プレイヤーもボットも AvatarRenderState 系）はキャラ描画器へ。
  */
 @Mixin(value = EntityRenderDispatcher.class, priority = 500)
@@ -62,5 +68,29 @@ public abstract class BrawlerRenderDispatcherMixin {
 		if (BrawlerRenderer.INSTANCE != null && state instanceof AvatarRenderState a && BrawlerLooks.modelOf(a.id) != null) {
 			cir.setReturnValue(BrawlerRenderer.INSTANCE);
 		}
+	}
+
+	@Inject(method = "submit(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lnet/minecraft/client/renderer/state/level/CameraRenderState;DDDLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V",
+			at = @At("HEAD"), cancellable = true)
+	private void brawl$puppet(EntityRenderState state, CameraRenderState camera, double dx, double dy, double dz,
+			PoseStack poseStack, SubmitNodeCollector collector, CallbackInfo ci) {
+		if (!(state instanceof AvatarRenderState a)) {
+			return;
+		}
+		String bid = BrawlerLooks.brawlerOf(a.id);
+		if (bid == null || !MobPuppets.has(bid)) {
+			return;
+		}
+		if (a.isSpectator || a.isInvisible) { // 脱落・透明は描かない（今の自作モデルと同じ）
+			ci.cancel();
+			return;
+		}
+		EntityRenderDispatcher self = (EntityRenderDispatcher) (Object) this;
+		LivingEntityRenderState ps = MobPuppets.build(self, a, bid);
+		if (ps == null) {
+			return; // 作れなければ今までの描画へ
+		}
+		self.submit(ps, camera, dx, dy + MobPuppets.hover(bid), dz, poseStack, collector);
+		ci.cancel();
 	}
 }

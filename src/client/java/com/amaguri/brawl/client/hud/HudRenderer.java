@@ -44,6 +44,7 @@ final class HudRenderer {
 				Math.min(b.team().length, b.cubes().length))));
 		for (int i = 0; i < n; i++) {
 			boolean self = b.team()[i] == 0;
+			boolean ally = b.team()[i] == 2; // 自分の召喚物（相棒）は青
 			if (self && firstPerson) continue; // 自分の頭上表示は三人称（見下ろし含む）のときだけ
 			Entity e = mc.level.getEntity(b.ids()[i]);
 			if (e == null || e.isRemoved() || !e.isAlive() || b.hp()[i] <= 0) continue;
@@ -54,7 +55,8 @@ final class HudRenderer {
 			int[] sp = project(mc, x, y, z, w, h);
 			if (sp == null) continue;
 			int sx = sp[0], sy = sp[1]; // sy = バーの上端
-			int fillCol = self ? Ui.GREEN : Ui.RED, bg = self ? Ui.GREEN_BG : Ui.RED_BG, edge = self ? Ui.GREEN_EDGE : Ui.RED_EDGE;
+			int fillCol = self ? Ui.GREEN : ally ? Ui.BLUE : Ui.RED, bg = self ? Ui.GREEN_BG : ally ? Ui.NAVY : Ui.RED_BG,
+					edge = self ? Ui.GREEN_EDGE : ally ? Ui.BLUE_EDGE : Ui.RED_EDGE;
 			float f = b.maxHp()[i] <= 0 ? 0f : (float) b.hp()[i] / b.maxHp()[i];
 			Ui.fatBar(g, sx - BAR_W / 2, sy, BAR_W, BAR_H, f, fillCol, bg, Ui.NAVY_EDGE, 2);
 			Ui.text(g, font, String.valueOf(b.hp()[i]), sx, sy - 14, 1.25f, Ui.WHITE, edge, Ui.CENTER, true);

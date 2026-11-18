@@ -89,7 +89,7 @@ public final class Projectiles {
 			// 1) 参加者との交差（刻みの中で最も近い1人を先に処理）
 			List<LivingEntity> hits = new ArrayList<>();
 			for (LivingEntity t : Combat.participants(a.lvl)) {
-				if (t == s.owner() || a.hit.contains(t.getUUID())) continue;
+				if (t == s.owner() || Combat.sameSide(s.owner(), t) || a.hit.contains(t.getUUID())) continue;
 				AABB box = t.getBoundingBox().inflate(s.radius());
 				if (box.contains(from) || box.contains(to) || box.clip(from, to).isPresent()) {
 					hits.add(t);

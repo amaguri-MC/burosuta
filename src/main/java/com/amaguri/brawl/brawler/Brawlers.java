@@ -27,6 +27,8 @@ public final class Brawlers {
 	private Brawlers() {}
 
 	private static final Map<String, BrawlerDef> DEFS = new LinkedHashMap<>();
+	/** 召喚物（nitabear）。get() では引けるが all()（選択・ランダム）には載せない。 */
+	private static final Map<String, BrawlerDef> SUMMONS = new LinkedHashMap<>();
 	private static final Map<String, Item> WEAPONS = new HashMap<>();
 	private static final Map<UUID, Integer> LAST_ATTACK = new HashMap<>();
 	private static boolean inited;
@@ -41,13 +43,19 @@ public final class Brawlers {
 			// 見た目だけの Item（use/攻撃/設置の効果なし）。UNVERIFIED: Item.Properties#setId は ref-aibot と同じ使い方
 			WEAPONS.put(d.id(), Registry.register(BuiltInRegistries.ITEM, id, new Item(new Item.Properties().setId(key))));
 		}
+		BrawlerDef bear = BrawlerStats.bearDef();
+		SUMMONS.put(bear.id(), bear);
 		Tasks.init();
 		// ハンドラはサーバースレッドで呼ばれる（Fabric）。試合外・脱落後は attack/useSuper 側で false
 		ServerPlayNetworking.registerGlobalReceiver(Net.AttackPayload.TYPE, (payload, ctx) -> attack(ctx.player(), payload.yaw()));
 		ServerPlayNetworking.registerGlobalReceiver(Net.SuperPayload.TYPE, (payload, ctx) -> useSuper(ctx.player(), payload.yaw()));
 	}
 
-	public static BrawlerDef get(String id) { return id == null ? null : DEFS.get(id); }
+	public static BrawlerDef get(String id) {
+		if (id == null) return null;
+		BrawlerDef d = DEFS.get(id);
+		return d != null ? d : SUMMONS.get(id);
+	}
 
 	public static List<BrawlerDef> all() { return List.copyOf(DEFS.values()); }
 

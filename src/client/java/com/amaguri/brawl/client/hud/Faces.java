@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.amaguri.brawl.client.model.BrawlerModels;
+import com.amaguri.brawl.client.model.MobPuppets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -16,11 +17,13 @@ import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 /**
- * キャラの顔（テクスチャの head ボーンの正面を切り出して拡大）。
+ * キャラの顔。モブのキャラはバニラのモブのテクスチャ（人形の描画器から取る）の頭の正面を切り出す。
+ * それ以外（ニタの相棒など）は自作モデルの
  * models/brawler/&lt;id&gt;.json の head の最初の cube（uv, size[w,h,d]）から、正面 = (u+d, v+d, w, h) を使う。
  * モデルの高さ（ブロック）も一緒に覚える（選択画面の3D表示の大きさ合わせ用）。
  */
@@ -28,7 +31,7 @@ public final class Faces {
 	private Faces() {}
 
 	/** u,v,w,h=顔の領域（テクセル）、tw,th=テクスチャ全体、height=モデルの高さ（ブロック）。 */
-	public record Info(int u, int v, int w, int h, int tw, int th, float height) {}
+	public record Info(Identifier tex, int u, int v, int w, int h, int tw, int th, float height) {}
 
 	private static final Map<String, Optional<Info>> CACHE = new HashMap<>();
 	private static ResourceManager cachedFor;
@@ -36,11 +39,27 @@ public final class Faces {
 	public static Info info(String id) {
 		ResourceManager rm = Minecraft.getInstance().getResourceManager();
 		if (rm != cachedFor) { CACHE.clear(); cachedFor = rm; } // リロードで作り直す
-		return CACHE.computeIfAbsent(id, k -> Optional.ofNullable(load(rm, k))).orElse(null);
+		Optional<Info> c = CACHE.get(id);
+		if (c == null) {
+			Info i = load(rm, id);
+			if (i == null && MobPuppets.has(id)) return null; // level がまだ無い等: 覚えずに次回また試す
+			c = Optional.ofNullable(i);
+			CACHE.put(id, c);
+		}
+		return c.orElse(null);
+	}
+
+	private static Info loadMob(String id) {
+		MobPuppets.Face f = MobPuppets.faceOf(id);
+		if (f == null) return null;
+		Identifier tex = MobPuppets.textureOf(id);
+		if (tex == null) return null;
+		return new Info(tex, f.u(), f.v(), f.w(), f.h(), f.tw(), f.th(), MobPuppets.visualHeight(id));
 	}
 
 	private static Info load(ResourceManager rm, String id) {
 		if (id == null || !id.matches("[a-z0-9_]+")) return null;
+		if (MobPuppets.has(id)) return loadMob(id);
 		Optional<Resource> res = rm.getResource(BrawlerModels.modelLocation(id));
 		if (res.isEmpty()) return null;
 		try (InputStream in = res.get().open(); InputStreamReader r = new InputStreamReader(in, StandardCharsets.UTF_8)) {
@@ -65,11 +84,11 @@ public final class Faces {
 					JsonArray size = c.getAsJsonArray("size"), uv = c.getAsJsonArray("uv");
 					int w = Math.round(size.get(0).getAsFloat()), h = Math.round(size.get(1).getAsFloat());
 					int d = Math.round(size.get(2).getAsFloat());
-					face = new Info(uv.get(0).getAsInt() + d, uv.get(1).getAsInt() + d, w, h, tw, th, 0f);
+					face = new Info(null, uv.get(0).getAsInt() + d, uv.get(1).getAsInt() + d, w, h, tw, th, 0f);
 				}
 			}
 			if (face == null) return null;
-			return new Info(face.u, face.v, face.w, face.h, tw, th, top / 16f);
+			return new Info(BrawlerModels.textureLocation(id), face.u, face.v, face.w, face.h, tw, th, top / 16f);
 		} catch (Exception e) {
 			return null;
 		}
@@ -84,7 +103,7 @@ public final class Faces {
 		}
 		float s = Math.min((float) size / f.w, (float) size / f.h);
 		int dw = Math.max(1, Math.round(f.w * s)), dh = Math.max(1, Math.round(f.h * s));
-		g.blit(RenderPipelines.GUI_TEXTURED, BrawlerModels.textureLocation(id), x + (size - dw) / 2, y + (size - dh) / 2,
+		g.blit(RenderPipelines.GUI_TEXTURED, f.tex, x + (size - dw) / 2, y + (size - dh) / 2,
 				(float) f.u, (float) f.v, dw, dh, f.w, f.h, f.tw, f.th);
 	}
 

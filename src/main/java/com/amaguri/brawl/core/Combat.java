@@ -109,6 +109,47 @@ public final class Combat {
 		return st;
 	}
 
+	/** 召喚物（相棒）の参加。join と同じで、召喚主の UUID を記録する。召喚主と相棒は互いに当たらない。 */
+	public static BrawlState joinSummon(LivingEntity e, String brawlerId, UUID ownerId) {
+		BrawlState st = join(e, brawlerId);
+		st.ownerId = ownerId;
+		return st;
+	}
+
+	/** 召喚主の実体。召喚物でなければ（または居なければ）null。 */
+	public static LivingEntity ownerOf(Entity e) {
+		BrawlState st = state(e);
+		if (st == null || st.ownerId == null) return null;
+		LivingEntity o = ENTITIES.get(st.ownerId);
+		return o != null && !o.isRemoved() ? o : null;
+	}
+
+	private static UUID rootId(Entity e) {
+		BrawlState st = state(e);
+		return st != null && st.ownerId != null ? st.ownerId : e.getUUID();
+	}
+
+	/** 同じ陣営（召喚主と相棒、同じ主の相棒どうし）。別々の実体のときだけ true。 */
+	public static boolean sameSide(Entity a, Entity b) {
+		if (a == null || b == null || a == b) return false;
+		return rootId(a).equals(rootId(b));
+	}
+
+	/** その召喚主の召喚物をすべて消す（2体目を呼ぶとき・召喚主が倒れたとき）。 */
+	public static void dismissSummons(UUID ownerId) {
+		for (Map.Entry<UUID, BrawlState> en : new ArrayList<>(STATES.entrySet())) {
+			if (ownerId.equals(en.getValue().ownerId)) removeSummon(en.getKey());
+		}
+	}
+
+	private static void removeSummon(UUID id) {
+		LivingEntity e = ENTITIES.get(id);
+		STATES.remove(id);
+		ENTITIES.remove(id);
+		ORIGINAL_SPEED.remove(id);
+		if (e != null && !e.isRemoved()) e.discard();
+	}
+
 	public static void leave(LivingEntity e) {
 		BrawlState st = STATES.remove(e.getUUID());
 		ENTITIES.remove(e.getUUID());
@@ -189,8 +230,15 @@ public final class Combat {
 	public static void damage(LivingEntity victim, LivingEntity attacker, int baseDamage, boolean fromMainAttack) {
 		BrawlState vs = state(victim);
 		if (vs == null || !vs.alive) return;
-		if (!MatchHooks.canHit.test(attacker, victim)) return;
+		if (attacker != null && sameSide(attacker, victim)) return; // 召喚主と相棒は当たらない
 		BrawlState as = attacker != null ? state(attacker) : null;
+		// 召喚物の攻撃は召喚主の手柄（ゲージは溜めない）
+		LivingEntity credit = attacker;
+		if (as != null && as.ownerId != null) {
+			credit = ownerOf(attacker);
+			fromMainAttack = false;
+		}
+		if (!MatchHooks.canHit.test(credit, victim)) return;
 		float mul = as != null ? as.damageMul() : 1.0f;
 		int dmg = Math.round(baseDamage * mul);
 		if (dmg <= 0) return;
@@ -203,7 +251,7 @@ public final class Combat {
 			sl.broadcastDamageEvent(victim, sl.damageSources().generic());
 		}
 
-		if (fromMainAttack && as != null && attacker != victim) {
+		if (fromMainAttack && as != null && attacker != victim) { // 召喚物は上で false にしてある
 			BrawlerDef d = Brawlers.get(as.brawlerId);
 			if (d != null) as.superCharge = Math.min(1.0f, as.superCharge + d.superPerHit());
 		}
@@ -212,7 +260,7 @@ public final class Combat {
 			vs.hp = 0;
 			if (vs.alive) {
 				vs.alive = false;
-				MatchHooks.onEliminated.accept(victim, attacker);
+				MatchHooks.onEliminated.accept(victim, credit);
 			}
 		}
 	}
@@ -225,7 +273,7 @@ public final class Combat {
 
 	public static void addCube(LivingEntity e) {
 		BrawlState st = state(e);
-		if (st == null || !st.alive) return;
+		if (st == null || !st.alive || st.ownerId != null) return; // 召喚物は拾えない
 		st.cubes++;
 		st.hp = Math.min(st.maxHp(), st.hp + 400);
 	}
@@ -245,7 +293,7 @@ public final class Combat {
 			int baseDamage, boolean fromMainAttack) {
 		double r2 = radiusBlocks * radiusBlocks;
 		for (LivingEntity t : participants(lvl)) {
-			if (t == attacker) continue;
+			if (t == attacker || sameSide(attacker, t)) continue;
 			if (distSqToBox(center, t.getBoundingBox()) <= r2) {
 				damage(t, attacker, baseDamage, fromMainAttack);
 			}
@@ -332,6 +380,17 @@ public final class Combat {
 			}
 			all.add(e);
 		}
+
+		// 召喚主が倒れた・居なくなった召喚物は消す
+		List<UUID> orphans = new ArrayList<>();
+		for (LivingEntity e : all) {
+			BrawlState st = STATES.get(e.getUUID());
+			if (st == null || st.ownerId == null) continue;
+			BrawlState os = STATES.get(st.ownerId);
+			if (os == null || !os.alive || !st.alive) orphans.add(e.getUUID());
+		}
+		for (UUID id : orphans) removeSummon(id);
+		all.removeIf(e -> !STATES.containsKey(e.getUUID()));
 
 		for (LivingEntity e : all) {
 			BrawlState st = STATES.get(e.getUUID());
@@ -439,7 +498,7 @@ public final class Combat {
 				ids[i] = t.getId();
 				hp[i] = ts.hp;
 				maxHp[i] = ts.maxHp();
-				team[i] = t == p ? 0 : 1;
+				team[i] = t == p ? 0 : (ts.ownerId != null && ts.ownerId.equals(p.getUUID()) ? 2 : 1);
 				cubes[i] = ts.cubes;
 			}
 			ServerPlayNetworking.send(p, new Net.BarsPayload(ids, hp, maxHp, team, cubes));

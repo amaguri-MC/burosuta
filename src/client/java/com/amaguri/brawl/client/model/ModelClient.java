@@ -12,7 +12,7 @@ public final class ModelClient {
 
 	public static void init() {
 		ClientPlayNetworking.registerGlobalReceiver(Net.LooksPayload.TYPE, (p, ctx) -> BrawlerLooks.set(p.ids(), p.brawlers()));
-		ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> BrawlerLooks.clear());
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> BrawlerLooks.clear());
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> { BrawlerLooks.clear(); MobPuppets.clear(); });
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> { BrawlerLooks.clear(); MobPuppets.clear(); });
 	}
 }

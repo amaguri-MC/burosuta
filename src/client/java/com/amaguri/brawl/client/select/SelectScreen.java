@@ -10,6 +10,7 @@ import com.amaguri.brawl.client.hud.HudState;
 import com.amaguri.brawl.client.hud.Ui;
 import com.amaguri.brawl.client.model.BrawlerModel;
 import com.amaguri.brawl.client.model.BrawlerModels;
+import com.amaguri.brawl.client.model.MobPuppets;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -18,7 +19,10 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.model.Model;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -200,6 +204,20 @@ public final class SelectScreen extends Screen {
 
 	/** キャラのモデルを GUI に描く（Model.Simple に包んで GuiGraphicsExtractor.skin で描く）。無ければ顔を大きく。 */
 	private void model3d(GuiGraphicsExtractor g, String id, int x0, int y0, int x1, int y1, float pt) {
+		// バニラのモブの人形（EntityRenderState を GUI に描く）
+		if (MobPuppets.has(id)) {
+			float rot = 180f + 25f + (age + pt) * 1.4f + dragYaw;
+			EntityRenderState st = MobPuppets.guiState(Minecraft.getInstance().getEntityRenderDispatcher(), id, rot, age + pt);
+			if (st != null) {
+				float vh = MobPuppets.visualHeight(id);
+				float px = 0.9f * (y1 - y0) / vh; // 1ブロックあたりのピクセル
+				float tilt = (float) Math.toRadians(-5.0);
+				// UNVERIFIED: entity() の引数は (state, 1ブロックのpx, 平行移動(ブロック), 回転, カメラ角, x0, y0, x1, y1)。InventoryScreen に倣い Z を PI 回して上下を直す
+				g.entity(st, px, new Vector3f(0f, vh / 2f, 0f), new Quaternionf().rotateZ((float) Math.PI).rotateX(tilt),
+						new Quaternionf().rotateX(tilt), x0, y0, x1, y1);
+				return;
+			}
+		}
 		BrawlerModel m = BrawlerModels.get(id);
 		Faces.Info fi = Faces.info(id);
 		if (m == null || fi == null) { // 代替: 正面の顔を大きく

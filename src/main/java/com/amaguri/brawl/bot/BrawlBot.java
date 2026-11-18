@@ -39,6 +39,11 @@ import com.amaguri.brawl.core.BrawlState;
 import com.amaguri.brawl.core.Combat;
 import com.amaguri.brawl.mode.Gas;
 
+import static com.amaguri.brawl.brawler.BrawlerStats.BEAR_BITE_INTERVAL_TICKS;
+import static com.amaguri.brawl.brawler.BrawlerStats.BEAR_DMG;
+import static com.amaguri.brawl.brawler.BrawlerStats.BEAR_REACH_BLOCKS;
+import static com.amaguri.brawl.brawler.BrawlerStats.BEAR_SIGHT_BLOCKS;
+
 /**
  * 試合の人数合わせ用ボット。バニラのAIゴールは使わず、毎tickの自前の思考で動く。
  * 思考の優先順: 1 毒ガス回避 / 2 低HPで退避 / 3 見える敵と戦う / 4 キューブ / 5 箱 / 6 中央へ。
@@ -133,6 +138,31 @@ public class BrawlBot extends PathfinderMob {
 		return bot;
 	}
 
+	/** 召喚物（ニタの相棒クマ）を呼ぶ。Combat.joinSummon で召喚主に結び付ける。 */
+	public static BrawlBot spawnSummon(ServerLevel lvl, Vec3 pos, String brawlerId, String name, LivingEntity owner) {
+		BrawlBot bot = BotEntities.BRAWL_BOT.create(lvl, EntitySpawnReason.COMMAND);
+		if (bot == null) {
+			return null;
+		}
+		bot.brawlerId = brawlerId;
+		bot.botName = name;
+		bot.setCustomName(Component.literal(name));
+		bot.setCustomNameVisible(false);
+		bot.snapTo(pos.x, pos.y, pos.z, owner.getYRot(), 0f);
+		if (!lvl.addFreshEntity(bot)) {
+			return null;
+		}
+		Combat.joinSummon(bot, brawlerId, owner.getUUID());
+		BrawlerDef def = Brawlers.get(brawlerId);
+		if (def != null) {
+			AttributeInstance speed = bot.getAttribute(Attributes.MOVEMENT_SPEED);
+			if (speed != null) {
+				speed.setBaseValue(speedFor(def.speedTiles() * Tiles.BLOCKS_PER_TILE));
+			}
+		}
+		return bot;
+	}
+
 	// ---- エンティティの設定 ----
 
 	@Override
@@ -188,7 +218,57 @@ public class BrawlBot extends PathfinderMob {
 		}
 		setSprinting(false);
 		if (isNoAi()) return;
+		if (st.ownerId != null) {
+			thinkSummon(lvl, st);
+			return;
+		}
 		think(lvl, st);
+	}
+
+	// ---- 召喚物（相棒クマ）の思考: 一番近い見える敵を追って噛みつく。居なければ召喚主のそばへ ----
+
+	private int nextChaseTick;
+
+	private void thinkSummon(ServerLevel lvl, BrawlState st) {
+		LivingEntity target = null;
+		double bestD = BEAR_SIGHT_BLOCKS * BEAR_SIGHT_BLOCKS;
+		for (LivingEntity e : Combat.participants(lvl)) {
+			if (e == this || !e.isAlive() || Combat.sameSide(this, e) || Combat.isHiddenFrom(e, this)) {
+				continue;
+			}
+			double d = e.distanceToSqr(this);
+			if (d < bestD) {
+				bestD = d;
+				target = e;
+			}
+		}
+		if (target == null) {
+			LivingEntity owner = Combat.ownerOf(this);
+			if (owner != null && distanceToSqr(owner) > 16.0 && tickCount >= nextChaseTick) {
+				nextChaseTick = tickCount + 10;
+				getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), 1.0);
+			}
+			return;
+		}
+		getLookControl().setLookAt(target);
+		boolean reach = getBoundingBox().inflate(BEAR_REACH_BLOCKS, 0.2, BEAR_REACH_BLOCKS).intersects(target.getBoundingBox());
+		if (!reach) {
+			if (tickCount >= nextChaseTick) {
+				nextChaseTick = tickCount + 5;
+				if (!getNavigation().moveTo(target.getX(), target.getY(), target.getZ(), 1.0)) {
+					getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), 1.0);
+				}
+			}
+			return;
+		}
+		getNavigation().stop();
+		if (tickCount >= nextAttackTick) {
+			nextAttackTick = tickCount + BEAR_BITE_INTERVAL_TICKS;
+			double dx = target.getX() - getX(), dz = target.getZ() - getZ();
+			faceYaw((float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG));
+			playSound(net.minecraft.sounds.SoundEvents.POLAR_BEAR_WARNING, 0.8f, 1.2f);
+			Combat.damage(target, this, BEAR_DMG, false); // 手柄は召喚主（Combat.damage が付け替える）
+		}
 	}
 
 	private void think(ServerLevel lvl, BrawlState st) {
@@ -301,7 +381,7 @@ public class BrawlBot extends PathfinderMob {
 		LivingEntity best = null;
 		double bestD = maxDist * maxDist;
 		for (LivingEntity e : Combat.participants(lvl)) {
-			if (e == this || !e.isAlive()) {
+			if (e == this || !e.isAlive() || Combat.sameSide(this, e)) {
 				continue;
 			}
 			double d = e.distanceToSqr(this);
@@ -325,7 +405,7 @@ public class BrawlBot extends PathfinderMob {
 		LivingEntity best = null;
 		double bestD = maxDist * maxDist;
 		for (LivingEntity e : Combat.participants(lvl)) {
-			if (e == this || !e.isAlive() || Combat.isHiddenFrom(e, this)) {
+			if (e == this || !e.isAlive() || Combat.sameSide(this, e) || Combat.isHiddenFrom(e, this)) {
 				continue;
 			}
 			double d = e.distanceToSqr(this);

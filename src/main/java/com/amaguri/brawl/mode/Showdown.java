@@ -358,7 +358,6 @@ public final class Showdown {
 			if (e.eliminated) continue;
 			LivingEntity ent = entityOf(server, e);
 			if (ent == null) continue;
-			if (particleTick && !e.bot) Gas.edgeParticles(m.level, (ServerPlayer) ent);
 			if (ent.getY() < floorY - 20) {
 				Combat.damage(ent, null, 100000, false);        // 場外へ落ちた
 			} else if (damageTick && Gas.inGas(ent.position())) {

@@ -17,6 +17,8 @@ public final class BrawlState {
 	public long lastActTick;
 	public long lastHurtTick;
 	public long revealUntilTick;
+	/** 召喚物（ニタの相棒など）なら召喚主の UUID。普通の参加者は null。 */
+	public UUID ownerId;
 
 	BrawlState(UUID id, String brawlerId) {
 		this.id = id;
