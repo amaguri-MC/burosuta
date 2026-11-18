@@ -58,7 +58,7 @@ public class BrawlClientTest implements FabricClientGameTest {
 			});
 			context.waitTicks(50);
 			context.takeScreenshot(TestScreenshotOptions.of("lineup_lobby").disableCounterPrefix());
-			server.runCommand("kill @e[type=brawl:brawl_bot,tag=!brawl_lobby]");
+			server.runCommand("kill @e[type=brawl:bot,tag=!brawl_lobby]");
 			context.waitTicks(5);
 			server.runCommand("execute as @a at @s run tp @s ~ ~ ~-16");
 			context.waitTicks(40);
