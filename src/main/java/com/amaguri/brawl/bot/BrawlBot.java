@@ -178,6 +178,7 @@ public class BrawlBot extends PathfinderMob {
 		}
 		BrawlState st = Combat.state(this);
 		if (st == null) {
+			if (Combat.isDisplay(this)) return; // ロビーの像など見た目だけ
 			discard(); // 試合が終わっている
 			return;
 		}

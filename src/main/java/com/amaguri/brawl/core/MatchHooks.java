@@ -10,4 +10,7 @@ public final class MatchHooks {
 
 	/** (脱落した人, 倒した人 or null) */
 	public static BiConsumer<LivingEntity, LivingEntity> onEliminated = (v, k) -> {};
+
+	/** (攻撃した人 or null, 受ける人) → ダメージを通すか。ロビーの練習場などで使う（L が登録）。 */
+	public static java.util.function.BiPredicate<LivingEntity, LivingEntity> canHit = (a, v) -> true;
 }

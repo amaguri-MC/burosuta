@@ -149,3 +149,22 @@ public final class BotClient { public static void init(); } // client 側。プ�
 
 ## W6 hud `com.amaguri.brawl.client.hud`
 - `HudClient.init()`: 受信（Hud/Match/Hidden/Bars）、HUD描画、入力（試合中は左クリック/右クリック→AttackPayload、R→SuperPayload。バニラの攻撃・使用・ブロック破壊は止める）、隠れている実体を描かない、頭上HPバー
+
+---
+# 第2弾（見下ろし視点・本家風UI・ロビー）
+## 担当と範囲
+| 担当 | 範囲 |
+|---|---|
+| 司令塔 | api/Net.java（KillFeed/Result/Lobby/OpenSelect/Pick を追加済み）, core の MatchHooks.canHit・Combat.setDisplay/clearDisplay/isDisplay（追加済み） |
+| V view | `client/view/**`, `brawl.view.mixins.json`（client） |
+| U ui | `client/hud/**`（W6 のものを作り直してよい）, `client/select/**`, `assets/brawl/textures/gui/**` |
+| L lobby | `mode/**`（W4 のものを変えてよい）, `lobby/**`, `brawl.lobby.mixins.json`, `data/brawl/lobby/**`, ロビー用ブロックは `lobby/` 内で登録（arena のブロックは使ってよい） |
+
+## 約束
+- `com.amaguri.brawl.client.view.TopDown`（V）: `public static boolean active()`（見下ろし中か）, `public static float aimYaw()`（照準の向き 度）, `public static net.minecraft.world.phys.Vec3 aimPoint()`（カーソルが指す地面の点、無ければ null）
+  - 見下ろし中のクリック攻撃・照準は V が持つ（AttackPayload を送る）。U の入力処理は `TopDown.active()` のとき左/右クリックを扱わない（R の必殺は U のまま。yaw はプレイヤーの yRot = V が照準に合わせて毎フレーム設定する）
+- ロビーにいるプレイヤーは「練習中の参加者」（L が Combat.join する）。HudPayload は来るが、LobbyPayload.inLobby=true のあいだ U はロビー用の画面を出す
+- `Combat.setDisplay(e, id)` の実体はキャラのモデルで描かれる（像）。参加者ではない
+- `MatchHooks.canHit(attacker, victim)` が false ならダメージは通らない（練習場のルールに L が使う）
+- ステータス（トロフィー・勝利数・選択キャラ）は L がサーバーの config/brawl_stats.json に保存
+- `client/hud/HudState`（U）: payload の受信は U だけが登録し、`public static Net.HudPayload hud`（試合外 null）, `public static Net.MatchPayload match`, `public static Net.LobbyPayload lobby`（ロビー外 null）を持つ。V はこれを読むだけ

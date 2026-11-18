@@ -109,6 +109,72 @@ public final class Net {
 		@Override public Type<SuperPayload> type() { return TYPE; }
 	}
 
+	/** S2C キルログ（mode が脱落のたびに全プレイヤーへ）。killer="" は毒ガスなど。名前は表示名。 */
+	public record KillFeedPayload(String killer, String killerBrawler, String victim, String victimBrawler)
+			implements CustomPacketPayload {
+		public static final Type<KillFeedPayload> TYPE = typeOf("killfeed");
+		public static final StreamCodec<RegistryFriendlyByteBuf, KillFeedPayload> CODEC = StreamCodec.of(
+				(b, p) -> { b.writeUtf(p.killer); b.writeUtf(p.killerBrawler); b.writeUtf(p.victim); b.writeUtf(p.victimBrawler); },
+				b -> new KillFeedPayload(b.readUtf(), b.readUtf(), b.readUtf(), b.readUtf()));
+		@Override public Type<KillFeedPayload> type() { return TYPE; }
+	}
+
+	/**
+	 * S2C 試合結果（mode が試合終了時に参加プレイヤーへ1回）。rank=自分の順位、trophyDelta=増減。
+	 * names/brawlers/ranks は全参加者（順位順）。クライアントは結果画面を出す。
+	 */
+	public record ResultPayload(int rank, int total, int trophyDelta, int trophies, String[] names, String[] brawlers,
+			int[] ranks) implements CustomPacketPayload {
+		public static final Type<ResultPayload> TYPE = typeOf("result");
+		public static final StreamCodec<RegistryFriendlyByteBuf, ResultPayload> CODEC = StreamCodec.of(
+				(b, p) -> {
+					b.writeVarInt(p.rank); b.writeVarInt(p.total); b.writeVarInt(p.trophyDelta); b.writeVarInt(p.trophies);
+					b.writeVarInt(p.names.length);
+					for (int i = 0; i < p.names.length; i++) { b.writeUtf(p.names[i]); b.writeUtf(p.brawlers[i]); b.writeVarInt(p.ranks[i]); }
+				},
+				b -> {
+					int rank = b.readVarInt(), total = b.readVarInt(), d = b.readVarInt(), tr = b.readVarInt();
+					int n = b.readVarInt();
+					String[] ns = new String[n], bs = new String[n]; int[] rs = new int[n];
+					for (int i = 0; i < n; i++) { ns[i] = b.readUtf(); bs[i] = b.readUtf(); rs[i] = b.readVarInt(); }
+					return new ResultPayload(rank, total, d, tr, ns, bs, rs);
+				});
+		@Override public Type<ResultPayload> type() { return TYPE; }
+	}
+
+	/**
+	 * S2C ロビーの状況（lobby が10tickごとにロビーにいるプレイヤーへ。ロビー外に出たら inLobby=false を1回）。
+	 * ready/total=準備完了の人数/ロビーの人数、countdown=開始までの秒（-1=待機中）、selected=選んでいるキャラ。
+	 */
+	public record LobbyPayload(boolean inLobby, int ready, int total, int countdown, int trophies, int wins,
+			String selected, boolean meReady) implements CustomPacketPayload {
+		public static final Type<LobbyPayload> TYPE = typeOf("lobby");
+		public static final StreamCodec<RegistryFriendlyByteBuf, LobbyPayload> CODEC = StreamCodec.of(
+				(b, p) -> {
+					b.writeBoolean(p.inLobby); b.writeVarInt(p.ready); b.writeVarInt(p.total); b.writeVarInt(p.countdown + 1);
+					b.writeVarInt(p.trophies); b.writeVarInt(p.wins); b.writeUtf(p.selected); b.writeBoolean(p.meReady);
+				},
+				b -> new LobbyPayload(b.readBoolean(), b.readVarInt(), b.readVarInt(), b.readVarInt() - 1, b.readVarInt(),
+						b.readVarInt(), b.readUtf(), b.readBoolean()));
+		@Override public Type<LobbyPayload> type() { return TYPE; }
+	}
+
+	/** S2C キャラ選択画面を開け（像を右クリックしたとき。focus=最初に表示するキャラ）。 */
+	public record OpenSelectPayload(String focus) implements CustomPacketPayload {
+		public static final Type<OpenSelectPayload> TYPE = typeOf("open_select");
+		public static final StreamCodec<RegistryFriendlyByteBuf, OpenSelectPayload> CODEC = StreamCodec.of(
+				(b, p) -> b.writeUtf(p.focus), b -> new OpenSelectPayload(b.readUtf()));
+		@Override public Type<OpenSelectPayload> type() { return TYPE; }
+	}
+
+	/** C2S キャラを選んだ（選択画面の「選ぶ」）。lobby が受けて保存し LobbyPayload に反映。試合中は無視。 */
+	public record PickPayload(String brawler) implements CustomPacketPayload {
+		public static final Type<PickPayload> TYPE = typeOf("pick");
+		public static final StreamCodec<RegistryFriendlyByteBuf, PickPayload> CODEC = StreamCodec.of(
+				(b, p) -> b.writeUtf(p.brawler), b -> new PickPayload(b.readUtf()));
+		@Override public Type<PickPayload> type() { return TYPE; }
+	}
+
 	/** BrawlMod.onInitialize の最初に1回だけ呼ぶ（司令塔）。 */
 	public static void registerTypes() {
 		PayloadTypeRegistry.clientboundPlay().register(HudPayload.TYPE, HudPayload.CODEC);
@@ -116,6 +182,11 @@ public final class Net {
 		PayloadTypeRegistry.clientboundPlay().register(HiddenPayload.TYPE, HiddenPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(BarsPayload.TYPE, BarsPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(LooksPayload.TYPE, LooksPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(KillFeedPayload.TYPE, KillFeedPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(ResultPayload.TYPE, ResultPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(LobbyPayload.TYPE, LobbyPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(OpenSelectPayload.TYPE, OpenSelectPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(PickPayload.TYPE, PickPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(AttackPayload.TYPE, AttackPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(SuperPayload.TYPE, SuperPayload.CODEC);
 	}

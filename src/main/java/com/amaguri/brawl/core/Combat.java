@@ -189,6 +189,7 @@ public final class Combat {
 	public static void damage(LivingEntity victim, LivingEntity attacker, int baseDamage, boolean fromMainAttack) {
 		BrawlState vs = state(victim);
 		if (vs == null || !vs.alive) return;
+		if (!MatchHooks.canHit.test(attacker, victim)) return;
 		BrawlState as = attacker != null ? state(attacker) : null;
 		float mul = as != null ? as.damageMul() : 1.0f;
 		int dmg = Math.round(baseDamage * mul);
@@ -369,6 +370,24 @@ public final class Combat {
 		}
 	}
 
+	/** 参加者ではない「見た目だけ」の実体（ロビーの像など）。LooksPayload に載る。 */
+	private static final Map<Integer, String> DISPLAY = new java.util.concurrent.ConcurrentHashMap<>();
+	private static final Map<Integer, LivingEntity> DISPLAY_E = new java.util.concurrent.ConcurrentHashMap<>();
+
+	public static void setDisplay(LivingEntity e, String brawlerId) {
+		DISPLAY.put(e.getId(), brawlerId);
+		DISPLAY_E.put(e.getId(), e);
+	}
+
+	public static void clearDisplay(LivingEntity e) {
+		DISPLAY.remove(e.getId());
+		DISPLAY_E.remove(e.getId());
+	}
+
+	public static boolean isDisplay(Entity e) {
+		return DISPLAY.containsKey(e.getId());
+	}
+
 	/** 全員（観戦者も）に「どの実体がどのキャラの見た目か」を送る。試合外は空。 */
 	private static void syncLooks(MinecraftServer server) {
 		List<LivingEntity> es = new ArrayList<>();
@@ -376,11 +395,19 @@ public final class Combat {
 			LivingEntity e = ENTITIES.get(en.getKey());
 			if (e != null && !e.isRemoved()) es.add(e);
 		}
-		int[] ids = new int[es.size()];
-		String[] bs = new String[es.size()];
+		DISPLAY_E.values().removeIf(e -> e.isRemoved());
+		DISPLAY.keySet().retainAll(DISPLAY_E.keySet());
+		int n = es.size() + DISPLAY.size();
+		int[] ids = new int[n];
+		String[] bs = new String[n];
 		for (int i = 0; i < es.size(); i++) {
 			ids[i] = es.get(i).getId();
 			bs[i] = STATES.get(es.get(i).getUUID()).brawlerId;
+		}
+		int i = es.size();
+		for (Map.Entry<Integer, String> d : DISPLAY.entrySet()) {
+			ids[i] = d.getKey();
+			bs[i++] = d.getValue();
 		}
 		Net.LooksPayload pl = new Net.LooksPayload(ids, bs);
 		for (ServerPlayer p : server.getPlayerList().getPlayers()) ServerPlayNetworking.send(p, pl);
