@@ -88,8 +88,8 @@ public class BotRenderer extends LivingEntityRenderer<BrawlBot, AvatarRenderStat
 		return distanceSq < 48.0 * 48.0 && !entity.isInvisible() && !entity.getBotName().isEmpty();
 	}
 
-	@Override
 	static int DBG_E = 0, DBG_S = 0;
+	@Override
 	public void submit(AvatarRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera) {
 		if ((DBG_S++ % 200) == 0) org.slf4j.LoggerFactory.getLogger("brawl-dbg").info("[brawl-dbg] bot submit id={}", state.id);
 		// キャラの人形（バニラのモブ）があればそれを描く。人形が作れない/対応が無いときだけ、下の元のプレイヤー型ボットの見た目
