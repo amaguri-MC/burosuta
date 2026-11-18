@@ -54,16 +54,41 @@ public final class TopDownClient {
 			return;
 		}
 		boolean click = false;
+		boolean inLobby = HudState.lobby != null && HudState.lobby.inLobby();
 		while (mc.options.keyAttack.consumeClick()) click = true;
-		while (mc.options.keyUse.consumeClick()) click = true;
+		boolean use = false;
+		while (mc.options.keyUse.consumeClick()) use = true;
+		if (use && inLobby) interactUnderCursor(mc); // ロビーの右クリック = カーソルの先の像を選ぶ
+		else if (use) click = true;
 		pendingClick |= click;
-		boolean held = mc.options.keyAttack.isDown() || mc.options.keyUse.isDown();
+		boolean held = mc.options.keyAttack.isDown() || (!inLobby && mc.options.keyUse.isDown());
 		if ((held || pendingClick) && tick - lastAttackSend >= 4) {
 			ClientPlayNetworking.send(new Net.AttackPayload(yaw));
 			lastAttackSend = tick;
 			pendingClick = false;
 		}
 		if (tick % 2 == 0) guide(mc, yaw);
+	}
+
+	/** カーソルの光線に当たる一番近い実体へ、バニラの「右クリック」を送る。 */
+	private static void interactUnderCursor(Minecraft mc) {
+		Vec3 o = TopDown.rayOrigin, d = TopDown.rayDirection;
+		if (o == null || d == null || mc.level == null || mc.player == null || mc.gameMode == null) return;
+		Vec3 end = o.add(d.normalize().scale(48));
+		net.minecraft.world.entity.Entity best = null;
+		double bestD = Double.MAX_VALUE;
+		for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+			if (e == mc.player || !(e instanceof net.minecraft.world.entity.LivingEntity)) continue;
+			var hit = e.getBoundingBox().inflate(0.3).clip(o, end);
+			if (hit.isPresent()) {
+				double dd = hit.get().distanceToSqr(o);
+				if (dd < bestD) { bestD = dd; best = e; }
+			}
+		}
+		if (best != null) {
+			mc.gameMode.interact(mc.player, best, new net.minecraft.world.phys.EntityHitResult(best),
+					net.minecraft.world.InteractionHand.MAIN_HAND);
+		}
 	}
 
 	/** 照準ガイド: 射程ぶんの帯（幅1ブロック）の両縁をパーティクルの点線で描く。 */

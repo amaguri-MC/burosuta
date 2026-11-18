@@ -16,6 +16,7 @@ final class Msg {
 	}
 
 	static void title(ServerPlayer p, Component title, Component subtitle, int fadeIn, int stay, int fadeOut) {
+		if (true) return; // 大きな文字はクライアントの本家風UIが出す（バニラのタイトルと重なるので送らない）
 		p.connection.send(new ClientboundSetTitlesAnimationPacket(fadeIn, stay, fadeOut));
 		p.connection.send(new ClientboundSetSubtitleTextPacket(subtitle == null ? Component.empty() : subtitle));
 		p.connection.send(new ClientboundSetTitleTextPacket(title));

@@ -20,6 +20,8 @@ public final class TopDown {
 	static boolean enabled = true;
 	private static float aimYaw = 0f;
 	private static Vec3 aimPoint = null;
+	/** カーソルの光線（ロビーで像を右クリックするのに使う）。 */
+	public static Vec3 rayOrigin = null, rayDirection = null;
 	private static Vec3 focus = null;
 	private static long lastNanos = 0;
 
@@ -91,6 +93,7 @@ public final class TopDown {
 		double nx = mc.mouseHandler.xpos() / w, ny = mc.mouseHandler.ypos() / h;
 		double fov = cam.getFov();
 		Vec3 dir = rayDir(YAW, PITCH, fov, (double) win.getWidth() / Math.max(1, win.getHeight()), nx, ny);
+		rayOrigin = camPos; rayDirection = dir;
 		Vec3 hit = intersectPlane(camPos, dir, feet.y + AIM_HEIGHT);
 		aimPoint = hit;
 		if (hit != null) {

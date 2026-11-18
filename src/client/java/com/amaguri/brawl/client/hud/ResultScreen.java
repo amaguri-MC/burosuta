@@ -33,6 +33,7 @@ public final class ResultScreen extends Screen {
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (age < 25) return true; // 撃ち続けていた勝者がすぐ閉じないよう、最初の約1秒は無視
 		onClose();
 		return true;
 	}

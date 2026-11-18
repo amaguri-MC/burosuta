@@ -93,7 +93,10 @@ public final class Lobby {
 			countdown = -1;
 		});
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> onJoin(server, handler.getPlayer()));
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> IN_LOBBY.remove(handler.getPlayer().getUUID()));
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			IN_LOBBY.remove(handler.getPlayer().getUUID());
+			if (!Showdown.running()) com.amaguri.brawl.core.Combat.leave(handler.getPlayer()); // 練習の状態を残さない
+		});
 		ServerPlayNetworking.registerGlobalReceiver(Net.PickPayload.TYPE, (payload, ctx) -> pick(ctx.player(), payload.brawler()));
 		UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
 			if (hand != InteractionHand.MAIN_HAND || level.isClientSide()) return InteractionResult.PASS;
@@ -314,6 +317,7 @@ public final class Lobby {
 			if (IN_LOBBY.add(p.getUUID())) {
 				if (p.gameMode() != GameType.ADVENTURE) p.setGameMode(GameType.ADVENTURE);
 				upkeep(p);
+				sendLobby(p, true, 0, inArea.size(), -1, false); // 見下ろしが途切れないよう即1回
 			}
 		}
 		if (tickCount % 5 == 0) for (ServerPlayer p : inArea) upkeep(p);
@@ -410,6 +414,7 @@ public final class Lobby {
 	}
 
 	private static void title(ServerPlayer p, Component title, Component sub) {
+		if (true) return; // カウントダウンはクライアントのロビー画面が出す
 		p.connection.send(new ClientboundSetTitlesAnimationPacket(0, 22, 0));
 		p.connection.send(new ClientboundSetSubtitleTextPacket(sub == null ? Component.empty() : sub));
 		p.connection.send(new ClientboundSetTitleTextPacket(title));

@@ -26,6 +26,7 @@ public abstract class MinecraftMixin {
 
 	@Inject(method = "startUseItem()V", at = @At("HEAD"), cancellable = true)
 	private void brawl$noUseItem(CallbackInfo ci) {
+		if (HudState.lobby != null && HudState.lobby.inLobby()) return; // ロビーでは右クリックで像を選べるように
 		if (HudState.blockVanillaInput()) ci.cancel();
 	}
 }
