@@ -58,6 +58,12 @@ public class BrawlClientTest implements FabricClientGameTest {
 			});
 			context.waitTicks(50);
 			context.takeScreenshot(TestScreenshotOptions.of("lineup_lobby").disableCounterPrefix());
+			context.runOnClient(c -> com.amaguri.brawl.client.view.TopDown.enabled = false);
+			server.runCommand("execute as @a at @s run tp @s ~ ~ ~4 180 15");
+			context.waitTicks(20);
+			context.takeScreenshot(TestScreenshotOptions.of("lineup_fp").disableCounterPrefix());
+			server.runCommand("execute as @a at @s run tp @s ~ ~ ~-4");
+			context.runOnClient(c -> com.amaguri.brawl.client.view.TopDown.enabled = true);
 			server.runCommand("kill @e[type=brawl:bot,tag=!brawl_lobby]");
 			context.waitTicks(5);
 			server.runCommand("execute as @a at @s run tp @s ~ ~ ~-16");

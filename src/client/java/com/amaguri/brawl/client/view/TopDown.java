@@ -17,7 +17,7 @@ public final class TopDown {
 	public static final double AIM_HEIGHT = 1.0; // 足元からの照準面の高さ
 
 	/** キー V で切り替える（既定ON）。 */
-	static boolean enabled = true;
+	public static boolean enabled = true;
 	private static float aimYaw = 0f;
 	private static Vec3 aimPoint = null;
 	/** カーソルの光線（ロビーで像を右クリックするのに使う）。 */

@@ -88,7 +88,7 @@ public abstract class BrawlerRenderDispatcherMixin {
 		}
 		EntityRenderDispatcher self = (EntityRenderDispatcher) (Object) this;
 		LivingEntityRenderState ps = MobPuppets.build(self, a, bid);
-		if ((brawl$dbg++ % 200) == 0) org.slf4j.LoggerFactory.getLogger("brawl-dbg").info("[brawl-dbg] puppet id={} bid={} ps={} cls={}", a.id, bid, ps, a.getClass().getSimpleName());
+		if ((brawl$dbg++ % 200) == 0) org.slf4j.LoggerFactory.getLogger("brawl-dbg").info("[brawl-dbg] puppet id={} bid={} cls={} d=({},{},{}) light={} scale={} inv={} p=({},{},{})", a.id, bid, a.getClass().getSimpleName(), dx, dy, dz, ps == null ? -1 : ps.lightCoords, ps == null ? -1 : ps.scale, ps == null ? false : ps.isInvisible, a.x, a.y, a.z);
 		if (ps == null) {
 			return; // 作れなければ今までの描画へ
 		}
