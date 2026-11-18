@@ -392,6 +392,15 @@ public class BrawlGameTests {
 				boolean ok = runner.getNavigation().moveTo(goal.x, goal.y, goal.z, 1.0);
 				System.out.println("[BOTSPEED] " + id + " moveTo=" + ok + " dist=" + start[0].distanceTo(goal));
 			}
+			if (t == 5 || t == 30) {
+				StringBuilder sb = new StringBuilder();
+				for (int k = 0; k < RUN_LEN; k += 6) {
+					sb.append(k).append(':').append(h.getBlockState(new BlockPos(3, f, k)).getBlock().getName().getString()).append('/')
+							.append(h.getBlockState(new BlockPos(3, f + 1, k)).isAir() ? "air" : "SOLID").append(' ');
+				}
+				var path = runner.getNavigation().getPath();
+				System.out.println("[BOTSPEED] " + id + " t=" + t + " blocks " + sb + " path=" + (path == null ? "null" : path.getNodeCount() + " done=" + path.isDone() + " reach=" + path.canReach()));
+			}
 			if (t >= 5 && (t - 5) % 20 == 0 && (t - 5) / 20 < dist.length) {
 				int i = (int) ((t - 5) / 20);
 				Vec3 p = runner.position();
