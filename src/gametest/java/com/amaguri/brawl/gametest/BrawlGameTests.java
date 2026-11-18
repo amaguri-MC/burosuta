@@ -235,7 +235,7 @@ public class BrawlGameTests {
 		h.onEachTick(() -> {
 			long t = h.getTick();
 			if (!st.damaged) {
-				Boxes.damage(h.getLevel(), h.absolutePos(boxRel), 4000, picker);
+				Boxes.damage(h.getLevel(), h.absolutePos(boxRel), 6000, picker);
 				st.damaged = true;
 				return;
 			}
@@ -244,7 +244,7 @@ public class BrawlGameTests {
 				if (h.getBlockState(boxRel).is(ArenaBlocks.BOX)) {
 					if (t > 20) {
 						cleanup(picker);
-						h.fail("箱 HP 4000 のダメージで箱ブロックが消えない");
+						h.fail("箱 HP 6000 のダメージで箱ブロックが消えない");
 					}
 					return;
 				}
