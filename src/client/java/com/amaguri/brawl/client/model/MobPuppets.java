@@ -70,7 +70,7 @@ public final class MobPuppets {
 		SPECS.put("frank", new Spec(EntityTypes.IRON_GOLEM, Kind.GOLEM, 0f, 1.2f, new Face(8, 8, 8, 10, 128, 128)));
 		// 銅のゴーレム: 頭 8x5x10 (texOffs 0,0) → 正面 (10,10,8,5)。テクスチャ 64x64
 		SPECS.put("darryl", new Spec(EntityTypes.COPPER_GOLEM, Kind.GOLEM, 0f, 1.2f, new Face(10, 10, 8, 5, 64, 64)));
-		SPECS.put("mimosa", new Spec(EntityTypes.BLAZE, Kind.BLAZE, 0.15f, 1.2f, new Face(8, 8, 8, 8, 64, 32)));
+		SPECS.put("mimosa", new Spec(EntityTypes.BLAZE, Kind.BLAZE, 0f, 1.2f, new Face(8, 8, 8, 8, 64, 32)));
 		SPECS.put("barley", new Spec(EntityTypes.WITCH, Kind.WITCH, 0f, 1.2f, new Face(10, 10, 10, 10, 64, 128)));
 		SPECS.put("nita", new Spec(EntityTypes.POLAR_BEAR, Kind.BEAR, 0f, 1.9f, new Face(7, 7, 7, 7, 128, 64)));
 		// アレイは高さ0.6の小さな妖精で、拡大すると地面にめり込んで見えるので少し浮かせる。頭 5x5x5 (texOffs 0,0)。テクスチャ 32x32
@@ -128,8 +128,8 @@ public final class MobPuppets {
 		}
 		e.setId(nextId--); // level に載せない仮の実体は負のID
 		if (e instanceof Mob m) {
-			if (sp.kind == Kind.PILLAGER || sp.kind == Kind.WITHER_SKELETON) {
-				m.setAggressive(true); // 構えたままにする
+			if (sp.kind == Kind.PILLAGER) {
+				m.setAggressive(true); // 構えたままにする（ウィザースケルトンは剣を持って腕を下ろした自然な待機のまま）
 			}
 			m.setNoAi(true);
 		}
