@@ -62,6 +62,15 @@ public class BrawlClientTest implements FabricClientGameTest {
 			server.runCommand("execute as @a at @s run tp @s ~ ~ ~4 180 15");
 			context.waitTicks(20);
 			context.takeScreenshot(TestScreenshotOptions.of("lineup_fp").disableCounterPrefix());
+			// --- プレイヤー自身がその3体を使ったときの姿（三人称の正面） ---
+			server.runCommand("kill @e[type=brawl:bot,tag=!brawl_lobby]");
+			for (String sid : new String[] {"edgar", "barley", "mimosa"}) {
+				server.runOnServer(ms -> com.amaguri.brawl.core.Combat.join(ms.getPlayerList().getPlayers().get(0), sid));
+				context.runOnClient(c -> c.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT));
+				context.waitTicks(30);
+				context.takeScreenshot(TestScreenshotOptions.of("self_" + sid).disableCounterPrefix());
+			}
+			context.runOnClient(c -> c.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON));
 			server.runCommand("execute as @a at @s run tp @s ~ ~ ~-4");
 			context.runOnClient(c -> com.amaguri.brawl.client.view.TopDown.enabled = true);
 			server.runCommand("kill @e[type=brawl:bot,tag=!brawl_lobby]");
