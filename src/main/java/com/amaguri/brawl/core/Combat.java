@@ -41,7 +41,18 @@ public final class Combat {
 	/** プレイヤー基本の移動速度属性値と、そのときのブロック/秒。 */
 	private static final double PLAYER_BASE_SPEED = 0.1;
 	// 実測（client gametest で W を押して測った値）: 属性 0.119 で 3.28 ブロック/秒 → 0.1 あたり 2.755。バニラの公称 4.317 とは違う
-	private static final double PLAYER_BASE_BPS = 2.755;
+	private static final double PLAYER_BASE_BPS = 2.755; // 旧（未使用）
+
+	/**
+	 * プレイヤーの 実速度(ブロック/秒) = A × 属性^k を client gametest の実測2点から求めた
+	 * （属性0.119→3.28、0.1866→4.19）。比例ではないので式で逆算する。
+	 */
+	private static final double PLAYER_SPEED_A = 10.44;
+	private static final double PLAYER_SPEED_EXP = 0.544;
+
+	public static double playerSpeedFor(double blocksPerSec) {
+		return Math.pow(Math.max(0.0, blocksPerSec) / PLAYER_SPEED_A, 1.0 / PLAYER_SPEED_EXP);
+	}
 	private static final double BUSH_REVEAL_BLOCKS = 4.0;
 	private static final double BARS_RANGE = 48.0;
 
@@ -100,7 +111,7 @@ public final class Combat {
 			if (e instanceof BrawlBot) {
 				sp.setBaseValue(BrawlBot.speedFor(bps));
 			} else {
-				sp.setBaseValue(bps / PLAYER_BASE_BPS * PLAYER_BASE_SPEED);
+				sp.setBaseValue(playerSpeedFor(bps));
 			}
 			st.baseSpeed = sp.getBaseValue();
 			st.appliedSpeed = st.baseSpeed;
@@ -610,7 +621,7 @@ public final class Combat {
 			}
 		}
 		if (st.baseSpeed >= 0) {
-			double want = st.baseSpeed * (e instanceof BrawlBot ? BrawlBot.attrMulFor(mul) : mul);
+			double want = st.baseSpeed * (e instanceof BrawlBot ? BrawlBot.attrMulFor(mul) : Math.pow(Math.max(0.0, mul), 1.0 / PLAYER_SPEED_EXP));
 			if (Math.abs(want - st.appliedSpeed) > 1e-9) {
 				AttributeInstance sp = e.getAttribute(Attributes.MOVEMENT_SPEED);
 				if (sp != null) {
