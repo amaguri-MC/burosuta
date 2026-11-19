@@ -1,0 +1,29 @@
+Note: /home/runner/work/burosuta/burosuta/src/client/java/com/amaguri/brawl/client/bot/BotClient.java uses or overrides a deprecated API.
+	- brawl 0.1.0
+	- brawl-gametest 1.0.0
+[19:20:42] [Render thread/ERROR] (Minecraft) Illegal option value 0 for Anisotropic Filtering
+[19:20:52] [Render thread/ERROR] (Minecraft) Error while loading the narrator
+com.mojang.text2speech.Narrator$InitializeException: Failed to load library flite
+	Suppressed: java.io.IOException: Native library (linux-x86-64/libflite.so) not found in resource path (/home/runner/work/burosuta/burosuta/build/classes/java/gametest:/home/runner/work/burosuta/burosuta/build/resources/gametest:/home/runner/work/burosuta/burosuta/build/classes/java/main:/home/runner/work/burosuta/burosuta/build/resources/main:/home/runner/.gradle/caches/modules-2/files-2.1/net.fa
+[19:20:52] [Download-2/INFO] (Minecraft) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+[19:20:52] [Render thread/INFO] (Minecraft) Reloading ResourceManager: vanilla, brawl, fabric-advancement-api-v1, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-client-gametest-api-v1, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-a
+[19:20:55] [Render thread/ERROR] (Minecraft) Error starting SoundSystem. Turning off sounds & music
+java.lang.IllegalStateException: Failed to open OpenAL device
+[19:20:55] [Download-2/INFO] (Minecraft) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+[19:21:01] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+MinecraftClientHttpException[type=HTTP_ERROR, status=401, response=ErrorResponse[path=/player/certificates, error=null, errorMessage=null, details=null]]
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.buildHttpException(MinecraftClient.java:170)
+[19:21:36] [Render thread/INFO] (brawl-speed) [brawl-speed] player walked 10.280430213099292 blocks in 2s => 5.140215106549646 b/s (state=rusty) clientAttr=0.11906416492934908
+[19:21:48] [Server thread/INFO] (brawl) [box] broken at BlockPos{x=10056, y=100, z=10058}
+[19:21:48] [Server thread/INFO] (brawl) [cube] drop at (10057.0, 101.0, 10059.0) ok=true removed=false
+[19:21:48] [Server thread/INFO] (brawl) [box] broken at BlockPos{x=10052, y=100, z=10038}
+[19:21:48] [Server thread/INFO] (brawl) [cube] drop at (10053.0, 101.0, 10039.0) ok=true removed=false
+[19:21:49] [Server thread/INFO] (brawl) [box] broken at BlockPos{x=10078, y=100, z=10076}
+[19:21:49] [Server thread/INFO] (brawl) [cube] drop at (10079.0, 101.0, 10077.0) ok=true removed=false
+[19:21:50] [Server thread/INFO] (brawl) [box] broken at BlockPos{x=10044, y=100, z=10052}
+[19:21:50] [Server thread/INFO] (brawl) [cube] drop at (10045.0, 101.0, 10053.0) ok=true removed=false
+[19:21:52] [Server thread/INFO] (brawl) [box] broken at BlockPos{x=10040, y=100, z=10056}
+[19:21:52] [Server thread/INFO] (brawl) [cube] drop at (10041.0, 101.0, 10057.0) ok=true removed=false
+[19:21:59] [Render thread/ERROR] (Minecraft) ########## GL ERROR ##########
+[19:21:59] [Render thread/ERROR] (Minecraft) @ Render
+[19:21:59] [Render thread/ERROR] (Minecraft) 65547: X11: Standard cursor shape unavailable
