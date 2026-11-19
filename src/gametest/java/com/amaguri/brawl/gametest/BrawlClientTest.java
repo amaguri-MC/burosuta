@@ -131,9 +131,12 @@ public class BrawlClientTest implements FabricClientGameTest {
 			double[] p0 = new double[3];
 			context.runOnClient(c -> { p0[0] = c.player.getX(); p0[2] = c.player.getZ(); });
 			context.getInput().holdKey(o -> o.keyUp);
-			context.waitTicks(20); // 加速を待つ
-			context.runOnClient(c -> { p0[0] = c.player.getX(); p0[2] = c.player.getZ(); });
-			context.waitTicks(40);
+			for (int k = 0; k < 12; k++) {
+				context.waitTicks(5);
+				context.runOnClient(c -> org.slf4j.LoggerFactory.getLogger("brawl-speed").info(
+						"[brawl-speed] t z={} x={} y={} onGround={} dm={}", c.player.getZ(), c.player.getX(), c.player.getY(),
+						c.player.onGround(), c.player.getDeltaMovement()));
+			}
 			context.getInput().releaseKey(o -> o.keyUp);
 			context.runOnClient(c -> org.slf4j.LoggerFactory.getLogger("brawl-speed").info(
 					"[brawl-speed] player walked {} blocks in 2s => {} b/s (state={}) clientAttr={}",
