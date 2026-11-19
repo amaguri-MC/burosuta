@@ -112,6 +112,15 @@ public class BrawlClientTest implements FabricClientGameTest {
 			// 10秒後
 			context.waitTicks(140);
 			context.takeScreenshot(TestScreenshotOptions.of("brawl_hud_10s").disableCounterPrefix());
+			// --- 箱のHP表示（一番目の箱の南4ブロックへ移動し、少し削る） ---
+			server.runOnServer(ms -> {
+				net.minecraft.server.level.ServerPlayer pl = ms.getPlayerList().getPlayers().get(0);
+				net.minecraft.core.BlockPos bt = com.amaguri.brawl.arena.ArenaMap.layout().boxTiles().get(0);
+				pl.teleportTo(bt.getX() + 1.0, bt.getY(), bt.getZ() + 6.0);
+				com.amaguri.brawl.mode.Boxes.damage((net.minecraft.server.level.ServerLevel) pl.level(), bt, 2500, null);
+			});
+			context.waitTicks(25);
+			context.takeScreenshot(TestScreenshotOptions.of("box_hp").disableCounterPrefix());
 			context.runOnClient(c -> c.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK));
 			context.waitTicks(5);
 			context.takeScreenshot(TestScreenshotOptions.of("brawl_third_person").disableCounterPrefix());
