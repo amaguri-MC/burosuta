@@ -131,6 +131,8 @@ public class BrawlClientTest implements FabricClientGameTest {
 			double[] p0 = new double[3];
 			context.runOnClient(c -> { p0[0] = c.player.getX(); p0[2] = c.player.getZ(); });
 			context.getInput().holdKey(o -> o.keyUp);
+			context.waitTicks(20); // 加速を待つ
+			context.runOnClient(c -> { p0[0] = c.player.getX(); p0[2] = c.player.getZ(); });
 			context.waitTicks(40);
 			context.getInput().releaseKey(o -> o.keyUp);
 			context.runOnClient(c -> org.slf4j.LoggerFactory.getLogger("brawl-speed").info(

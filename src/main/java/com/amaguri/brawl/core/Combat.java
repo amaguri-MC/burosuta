@@ -40,7 +40,8 @@ public final class Combat {
 
 	/** プレイヤー基本の移動速度属性値と、そのときのブロック/秒。 */
 	private static final double PLAYER_BASE_SPEED = 0.1;
-	private static final double PLAYER_BASE_BPS = 4.317;
+	// 実測（client gametest で W を押して測った値）: 属性 0.119 で 3.28 ブロック/秒 → 0.1 あたり 2.755。バニラの公称 4.317 とは違う
+	private static final double PLAYER_BASE_BPS = 2.755;
 	private static final double BUSH_REVEAL_BLOCKS = 4.0;
 	private static final double BARS_RANGE = 48.0;
 
