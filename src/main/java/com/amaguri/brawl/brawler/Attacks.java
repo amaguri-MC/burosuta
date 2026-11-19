@@ -256,10 +256,24 @@ final class Attacks {
 			double hitRadiusBlocks, boolean breaks, boolean main, Consumer<LivingEntity> onHit) {
 		double perTick = Tiles.b(tiles) / ticks;
 		Set<LivingEntity> hit = new HashSet<>();
+		boolean[] hitBox = {false};
 		int[] t = {0};
 		Tasks.add(() -> {
 			if (!active(u) || Combat.disabled(u) || t[0]++ >= ticks) return true;
 			Vec3 p = u.position();
+			// 突進の先にパワーキューブ箱があれば1回ダメージ（モーティス・ダリル・ウシの突進でも箱を壊せるように）
+			if (!hitBox[0]) {
+				Vec3 q = p.add(d.scale(perTick + 0.8));
+				for (double dy : new double[] {0.5, 1.5}) {
+					BlockPos bp = BlockPos.containing(q.x, p.y + dy, q.z);
+					if (lvl.getBlockState(bp).getBlock() == com.amaguri.brawl.arena.ArenaBlocks.BOX) {
+						com.amaguri.brawl.core.BrawlState os = Combat.state(u);
+						com.amaguri.brawl.mode.Boxes.damage(lvl, bp, Math.round(dmg * (os == null ? 1f : os.damageMul())), u);
+						hitBox[0] = true;
+						break;
+					}
+				}
+			}
 			if (!breaks && blocked(lvl, p.add(d.scale(perTick + 0.6)))) return true; // 壁で止まる
 			Combat.markPush(u, 3);
 			u.setDeltaMovement(d.x * perTick, u.getDeltaMovement().y, d.z * perTick);

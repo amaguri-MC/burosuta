@@ -122,6 +122,23 @@ public class BrawlClientTest implements FabricClientGameTest {
 			context.runOnClient(c -> com.amaguri.brawl.client.view.TopDown.enabled = true);
 			context.waitTicks(5);
 
+			// --- プレイヤーの実際の歩く速さを測る（平らな台で W を2秒） ---
+			server.runCommand("fill -40 150 -40 40 150 40 minecraft:smooth_stone");
+			server.runCommand("tp @a 0 151 30 180 0");
+			context.waitTicks(10);
+			server.runOnServer(ms -> com.amaguri.brawl.core.Combat.join(ms.getPlayerList().getPlayers().get(0), "rusty"));
+			context.waitTicks(10);
+			double[] p0 = new double[3];
+			context.runOnClient(c -> { p0[0] = c.player.getX(); p0[2] = c.player.getZ(); });
+			context.getInput().holdKey(o -> o.keyUp);
+			context.waitTicks(40);
+			context.getInput().releaseKey(o -> o.keyUp);
+			context.runOnClient(c -> org.slf4j.LoggerFactory.getLogger("brawl-speed").info(
+					"[brawl-speed] player walked {} blocks in 2s => {} b/s (state={})",
+					Math.hypot(c.player.getX() - p0[0], c.player.getZ() - p0[2]),
+					Math.hypot(c.player.getX() - p0[0], c.player.getZ() - p0[2]) / 2.0,
+					com.amaguri.brawl.client.hud.HudState.hud == null ? "null" : com.amaguri.brawl.client.hud.HudState.hud.brawler()));
+			server.runOnServer(ms -> com.amaguri.brawl.core.Combat.leave(ms.getPlayerList().getPlayers().get(0)));
 			server.runCommand("difficulty normal");
 			server.runCommand("brawl start 9");
 			// 3秒カウントダウンが明けてから 3秒後
