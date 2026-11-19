@@ -249,9 +249,9 @@ public final class Combat {
 
 		vs.hp -= dmg;
 		vs.lastHurtTick = tick;
-		// 茂みの中でも、ダメージを受けた人・与えた人は1秒見える（本家と同じ）
+		// 茂みの中でも、ダメージを受けた人は1秒見える。
+		// 攻撃した側は「撃った時点」で consumeAmmo/consumeSuper が見えるようにする（毒の水たまりや相棒のダメージでは見えない）
 		vs.revealUntilTick = Math.max(vs.revealUntilTick, tick + 20);
-		if (as != null) as.revealUntilTick = Math.max(as.revealUntilTick, tick + 20);
 
 		// ライフスティール（edgar）: 与えたダメージの割合で回復。召喚物は対象外
 		if (as != null && as.ownerId == null && as.alive && attacker != victim) {
