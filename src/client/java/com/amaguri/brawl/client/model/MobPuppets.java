@@ -121,8 +121,27 @@ public final class MobPuppets {
 	private static final Map<String, Puppet> GUI = new HashMap<>();
 	private static int nextId = -2_000_000;
 
+	/**
+	 * 難易度ピースフルだと EntityType.create は敵モブ（襲撃者・ウィッチ・ブレイズ・ウィザースケルトン）に null を返す。
+	 * 見た目用の仮の実体なので、型の factory を直接呼んで作る。
+	 */
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private static LivingEntity createIgnoringPeaceful(net.minecraft.world.entity.EntityType<?> type, ClientLevel lvl) {
+		try {
+			java.lang.reflect.Field f = net.minecraft.world.entity.EntityType.class.getDeclaredField("factory");
+			f.setAccessible(true);
+			Object fac = f.get(type);
+			Object made = ((net.minecraft.world.entity.EntityType.EntityFactory) fac).create(type, lvl);
+			return made instanceof LivingEntity le ? le : null;
+		} catch (Throwable t) {
+			org.slf4j.LoggerFactory.getLogger("brawl").warn("[brawl] 人形を作れません: {} ({})", type, t.toString());
+			return null;
+		}
+	}
+
 	private static Puppet make(String bid, Spec sp, ClientLevel lvl) {
 		LivingEntity e = sp.type.create(lvl, EntitySpawnReason.LOAD);
+		if (e == null) e = createIgnoringPeaceful(sp.type, lvl); // ピースフルでは敵モブを create できない
 		if (e == null) {
 			return null;
 		}

@@ -43,6 +43,7 @@ public class BrawlClientTest implements FabricClientGameTest {
 			context.runOnClient(c -> c.gui.setScreen(null));
 			context.waitTicks(5);
 
+			server.runCommand("difficulty peaceful"); // ユーザー環境（ピースフル）で敵モブの見た目が出ないことがあった
 			// --- キャラ7人の並び（ロビーの中、プレイヤーの北側に一列。見下ろし視点で撮る） ---
 			server.runOnServer(ms -> {
 				net.minecraft.server.level.ServerPlayer pl = ms.getPlayerList().getPlayers().get(0);
@@ -121,6 +122,7 @@ public class BrawlClientTest implements FabricClientGameTest {
 			context.runOnClient(c -> com.amaguri.brawl.client.view.TopDown.enabled = true);
 			context.waitTicks(5);
 
+			server.runCommand("difficulty normal");
 			server.runCommand("brawl start 9");
 			// 3秒カウントダウンが明けてから 3秒後
 			context.waitTicks(COUNTDOWN_TICKS + 60);
