@@ -123,7 +123,9 @@ public class BrawlClientTest implements FabricClientGameTest {
 			context.waitTicks(5);
 
 			// --- プレイヤーの実際の歩く速さを測る（平らな台で W を2秒） ---
-			server.runCommand("fill -40 150 -40 40 150 40 minecraft:smooth_stone");
+			server.runCommand("tp @a 0 152 30 180 0");
+			context.waitTicks(20); // チャンクを読み込んでから台を置く（読み込み前の fill は失敗する）
+			server.runCommand("fill -20 150 -20 20 150 40 minecraft:smooth_stone");
 			server.runCommand("tp @a 0 151 30 180 0");
 			context.waitTicks(10);
 			server.runOnServer(ms -> com.amaguri.brawl.core.Combat.join(ms.getPlayerList().getPlayers().get(0), "rusty"));
