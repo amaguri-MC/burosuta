@@ -39,6 +39,7 @@ final class HudRenderer {
 	static final int BAR_W = 50, BAR_H = 6;
 
 	private static void overheadBars(GuiGraphicsExtractor g, Minecraft mc, Font font, DeltaTracker dt, int w, int h) {
+		boxBars(g, mc, font, w, h);
 		Net.BarsPayload b = HudState.barsOrNull();
 		if (b == null || mc.level == null) return;
 		boolean firstPerson = mc.options.getCameraType().isFirstPerson();
@@ -96,6 +97,22 @@ final class HudRenderer {
 	}
 
 	/** 実体の位置を画面（GUI座標）へ。見えない・画面外なら null。 */
+	/** パワーキューブ箱の上に HP の数字とバー（本家風）。試合中だけ。 */
+	private static void boxBars(GuiGraphicsExtractor g, Minecraft mc, Font font, int w, int h) {
+		Net.BoxesPayload bx = HudState.boxes;
+		if (bx == null || HudState.hud == null || HudState.hud.brawler().isEmpty() || mc.level == null) return;
+		int n = Math.min(bx.x().length, Math.min(bx.y().length, Math.min(bx.z().length, bx.hp().length)));
+		for (int i = 0; i < n; i++) {
+			net.minecraft.core.BlockPos bp = new net.minecraft.core.BlockPos(bx.x()[i], bx.y()[i], bx.z()[i]);
+			if (mc.level.getBlockState(bp).isAir()) continue; // 壊れた直後
+			int[] sp = project(mc, bx.x()[i] + 1.0, bx.y()[i] + 2.35, bx.z()[i] + 1.0, w, h);
+			if (sp == null) continue;
+			float f = bx.max() <= 0 ? 0f : (float) bx.hp()[i] / bx.max();
+			Ui.fatBar(g, sp[0] - BAR_W / 2, sp[1], BAR_W, BAR_H, f, 0xFFFFC23A, 0xFF5A3A12, Ui.NAVY_EDGE, 2);
+			Ui.text(g, font, String.valueOf(bx.hp()[i]), sp[0], sp[1] - 14, 1.25f, Ui.WHITE, 0xFF7A4A10, Ui.CENTER, true);
+		}
+	}
+
 	private static int[] project(Minecraft mc, double x, double y, double z, int w, int h) {
 		// UNVERIFIED: GameRenderer.projectPointToScreen は NDC（x,y が -1〜1、z>1 で背面）を返すと仮定
 		Vec3 ndc = mc.gameRenderer.projectPointToScreen(new Vec3(x, y, z));

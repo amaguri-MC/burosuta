@@ -65,6 +65,30 @@ public final class Boxes {
 		return new BlockPos(x, y, z);
 	}
 
+	/** 近くのプレイヤーへ箱のHPを送る（mode の tick と被弾時）。 */
+	static void sync(ServerLevel lvl) {
+		ArenaLayout l = layout();
+		if (l == null) return;
+		for (net.minecraft.server.level.ServerPlayer p : lvl.players()) {
+			if (com.amaguri.brawl.core.Combat.state(p) == null && !p.isSpectator()) continue;
+			java.util.List<BlockPos> near = new java.util.ArrayList<>();
+			for (BlockPos t : l.boxTiles()) {
+				if (t.distSqr(p.blockPosition()) > 48 * 48) continue;
+				if (lvl.getBlockState(t).getBlock() != ArenaBlocks.BOX) continue;
+				near.add(t);
+			}
+			int n = near.size();
+			int[] xs = new int[n], ys = new int[n], zs = new int[n], hs = new int[n];
+			for (int i = 0; i < n; i++) {
+				BlockPos t = near.get(i);
+				xs[i] = t.getX(); ys[i] = t.getY(); zs[i] = t.getZ();
+				hs[i] = HP.getOrDefault(t.asLong(), BOX_HP);
+			}
+			net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(p,
+					new com.amaguri.brawl.api.Net.BoxesPayload(xs, ys, zs, hs, BOX_HP));
+		}
+	}
+
 	public static void damage(ServerLevel lvl, BlockPos pos, int dmg, LivingEntity by) {
 		BlockPos b = find(pos);
 		if (b == null) b = findLoose(lvl, pos);
@@ -80,6 +104,7 @@ public final class Boxes {
 			HP.put(key, hp);
 			lvl.playSound(null, c.x, c.y, c.z, SoundEvents.WOOD_HIT, SoundSource.BLOCKS, 1.0f, 1.0f);
 			lvl.sendParticles(wood, c.x, c.y, c.z, 12, 0.7, 0.7, 0.7, 0.05);
+			if (Showdown.running()) sync(lvl);
 			return;
 		}
 		HP.remove(key);
@@ -94,5 +119,6 @@ public final class Boxes {
 		lvl.playSound(null, c.x, c.y, c.z, SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 1.2f, 0.9f);
 		lvl.sendParticles(wood, c.x, c.y, c.z, 40, 0.9, 0.9, 0.9, 0.1);
 		Cubes.drop(lvl, c, 1);
+		if (Showdown.running()) sync(lvl);
 	}
 }

@@ -249,6 +249,9 @@ public final class Combat {
 
 		vs.hp -= dmg;
 		vs.lastHurtTick = tick;
+		// 茂みの中でも、ダメージを受けた人・与えた人は1秒見える（本家と同じ）
+		vs.revealUntilTick = Math.max(vs.revealUntilTick, tick + 20);
+		if (as != null) as.revealUntilTick = Math.max(as.revealUntilTick, tick + 20);
 
 		// ライフスティール（edgar）: 与えたダメージの割合で回復。召喚物は対象外
 		if (as != null && as.ownerId == null && as.alive && attacker != victim) {
@@ -363,12 +366,18 @@ public final class Combat {
 		return Arena.isBush(head);
 	}
 
+	/** 茂みにいる同士が見える距離（3.5タイル）。 */
+	public static final double BUSH_TO_BUSH_BLOCKS = 7.0;
+
 	public static boolean isHiddenFrom(LivingEntity target, LivingEntity viewer) {
 		if (target == viewer) return false;
 		BrawlState ts = state(target);
 		if (ts == null) return false;
 		if (tick <= ts.revealUntilTick) return false;
-		if (target.distanceTo(viewer) <= BUSH_REVEAL_BLOCKS) return false;
+		double d = target.distanceTo(viewer);
+		if (d <= BUSH_REVEAL_BLOCKS) return false;
+		// 茂みにいる同士は少し遠くまで見える（本家: 同じ茂み・近くの茂みの敵は見える）
+		if (d <= BUSH_TO_BUSH_BLOCKS && inBush(viewer)) return false;
 		return inBush(target);
 	}
 

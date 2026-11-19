@@ -32,6 +32,7 @@ public final class HudClient {
 		ClientPlayNetworking.registerGlobalReceiver(Net.MatchPayload.TYPE, (p, ctx) -> HudState.onMatch(p));
 		ClientPlayNetworking.registerGlobalReceiver(Net.HiddenPayload.TYPE, (p, ctx) -> HudState.onHidden(p));
 		ClientPlayNetworking.registerGlobalReceiver(Net.BarsPayload.TYPE, (p, ctx) -> HudState.onBars(p));
+		ClientPlayNetworking.registerGlobalReceiver(Net.BoxesPayload.TYPE, (p, ctx) -> HudState.boxes = p);
 		ClientPlayNetworking.registerGlobalReceiver(Net.StatusPayload.TYPE, (p, ctx) -> HudState.onStatus(p));
 		ClientPlayNetworking.registerGlobalReceiver(Net.KillFeedPayload.TYPE, (p, ctx) -> HudState.onKill(p));
 		ClientPlayNetworking.registerGlobalReceiver(Net.LobbyPayload.TYPE, (p, ctx) -> HudState.onLobby(p));

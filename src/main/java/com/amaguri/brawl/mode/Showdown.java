@@ -380,6 +380,7 @@ public final class Showdown {
 			}
 		}
 		Cubes.tick(m.level, m.arena, cands);
+		if (m.level.getGameTime() % 10 == 0) Boxes.sync(m.level);
 		for (Entrant e : m.entrants) {
 			if (e.bot || e.eliminated) continue;
 			ServerPlayer p = player(server, e);

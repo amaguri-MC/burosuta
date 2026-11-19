@@ -31,6 +31,8 @@ public final class HudState {
 
 	static long hudTick = -1000, matchTick = -1000, lobbyTick = -1000;
 	static Net.BarsPayload bars = null;
+	/** パワーキューブ箱のHP（試合中）。 */
+	public static Net.BoxesPayload boxes = null;
 	static long barsTick = -1000;
 	static Set<Integer> hidden = Set.of();
 	static long hiddenTick = -1000;

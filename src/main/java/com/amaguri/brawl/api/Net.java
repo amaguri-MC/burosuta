@@ -187,6 +187,15 @@ public final class Net {
 		@Override public Type<StatusPayload> type() { return TYPE; }
 	}
 
+	/** S2C パワーキューブ箱のHP（mode が10tickごと＋被弾時に、近くの試合参加プレイヤーへ）。x/y/z=箱の北西下角。空=箱なし。 */
+	public record BoxesPayload(int[] x, int[] y, int[] z, int[] hp, int max) implements CustomPacketPayload {
+		public static final Type<BoxesPayload> TYPE = typeOf("boxes");
+		public static final StreamCodec<RegistryFriendlyByteBuf, BoxesPayload> CODEC = StreamCodec.of(
+				(b, p) -> { b.writeVarIntArray(p.x); b.writeVarIntArray(p.y); b.writeVarIntArray(p.z); b.writeVarIntArray(p.hp); b.writeVarInt(p.max); },
+				b -> new BoxesPayload(b.readVarIntArray(), b.readVarIntArray(), b.readVarIntArray(), b.readVarIntArray(), b.readVarInt()));
+		@Override public Type<BoxesPayload> type() { return TYPE; }
+	}
+
 	/** BrawlMod.onInitialize の最初に1回だけ呼ぶ（司令塔）。 */
 	public static void registerTypes() {
 		PayloadTypeRegistry.clientboundPlay().register(HudPayload.TYPE, HudPayload.CODEC);
@@ -195,6 +204,7 @@ public final class Net {
 		PayloadTypeRegistry.clientboundPlay().register(BarsPayload.TYPE, BarsPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(LooksPayload.TYPE, LooksPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(StatusPayload.TYPE, StatusPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(BoxesPayload.TYPE, BoxesPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(KillFeedPayload.TYPE, KillFeedPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ResultPayload.TYPE, ResultPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(LobbyPayload.TYPE, LobbyPayload.CODEC);
