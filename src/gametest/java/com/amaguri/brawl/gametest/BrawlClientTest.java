@@ -136,10 +136,11 @@ public class BrawlClientTest implements FabricClientGameTest {
 			context.waitTicks(40);
 			context.getInput().releaseKey(o -> o.keyUp);
 			context.runOnClient(c -> org.slf4j.LoggerFactory.getLogger("brawl-speed").info(
-					"[brawl-speed] player walked {} blocks in 2s => {} b/s (state={})",
+					"[brawl-speed] player walked {} blocks in 2s => {} b/s (state={}) clientAttr={}",
 					Math.hypot(c.player.getX() - p0[0], c.player.getZ() - p0[2]),
 					Math.hypot(c.player.getX() - p0[0], c.player.getZ() - p0[2]) / 2.0,
-					com.amaguri.brawl.client.hud.HudState.hud == null ? "null" : com.amaguri.brawl.client.hud.HudState.hud.brawler()));
+					com.amaguri.brawl.client.hud.HudState.hud == null ? "null" : com.amaguri.brawl.client.hud.HudState.hud.brawler(),
+					c.player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED)));
 			server.runOnServer(ms -> com.amaguri.brawl.core.Combat.leave(ms.getPlayerList().getPlayers().get(0)));
 			server.runCommand("difficulty normal");
 			server.runCommand("brawl start 9");
