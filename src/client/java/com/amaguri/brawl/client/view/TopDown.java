@@ -12,8 +12,8 @@ public final class TopDown {
 	private TopDown() {}
 
 	public static final float YAW = 180f;        // 北向き固定
-	public static final float PITCH = 58f;       // 俯角
-	public static final double DISTANCE = 11.5;  // 注視点からカメラまで
+	public static final float PITCH = 68f;       // 俯角（真上寄り。スナイパーの射程の先端まで見える）
+	public static final double DISTANCE = 22.0;  // 注視点からカメラまで（引き）
 	public static final double AIM_HEIGHT = 1.0; // 足元からの照準面の高さ
 
 	/** キー V で切り替える（既定ON）。 */
@@ -33,7 +33,20 @@ public final class TopDown {
 		return HudState.alive() || (HudState.lobby != null && HudState.lobby.inLobby());
 	}
 
-	public static float aimYaw() { return aimYaw; }
+	public static float aimYaw() { return lockedNow() ? lockedYaw : aimYaw; }
+
+	/** 溜め攻撃（アイアンゴーレム）の間は向きを固定する。 */
+	private static long lockUntilMs = 0L;
+	private static float lockedYaw = 0f;
+
+	public static void lockAim(float yaw, int ticks) {
+		lockedYaw = yaw;
+		lockUntilMs = System.currentTimeMillis() + ticks * 50L;
+	}
+
+	public static boolean lockedNow() {
+		return System.currentTimeMillis() < lockUntilMs;
+	}
 
 	/** カーソルが指す地面（高さ 足元+1.0 の面）の点。無ければ null。 */
 	public static Vec3 aimPoint() { return aimPoint; }
@@ -101,9 +114,10 @@ public final class TopDown {
 			if (dx * dx + dz * dz > 1e-4) aimYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
 		}
 		// プレイヤーの向きを照準へ（補間で回らないよう Old も揃える）
-		p.setYRot(aimYaw); p.yRotO = aimYaw;
+		float face = aimYaw();
+		p.setYRot(face); p.yRotO = face;
 		p.setXRot(0f); p.xRotO = 0f;
-		p.yHeadRot = aimYaw; p.yHeadRotO = aimYaw;
+		p.yHeadRot = face; p.yHeadRotO = face;
 		p.yBodyRot = aimYaw; p.yBodyRotO = aimYaw;
 	}
 

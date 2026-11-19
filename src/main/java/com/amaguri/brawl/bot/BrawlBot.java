@@ -475,7 +475,7 @@ public class BrawlBot extends PathfinderMob {
 		}
 		if (dist <= rangeB && Brawlers.attack(this, yaw)) {
 			faceYaw(yaw);
-			nextAttackTick = tickCount + Math.max(1, def.attackCooldownTicks());
+			nextAttackTick = tickCount + Math.max(1, def.attackCooldownTicks()) + hesitation();
 		}
 	}
 
@@ -491,12 +491,21 @@ public class BrawlBot extends PathfinderMob {
 		};
 	}
 
+	/** 撃ったあとのためらい（人間らしく弾を一気に撃ち切らない）。easy 10〜24 / normal 6〜16 / hard 2〜8 tick。 */
+	private int hesitation() {
+		return switch (difficulty) {
+			case "easy" -> 10 + random.nextInt(15);
+			case "hard" -> 2 + random.nextInt(7);
+			default -> 6 + random.nextInt(11);
+		};
+	}
+
 	/** 狙いのずれ（度）: easy ±15 / normal ±7 / hard ±3。 */
 	private float aimError() {
 		double e = switch (difficulty) {
-			case "easy" -> 15.0;
-			case "hard" -> 3.0;
-			default -> 7.0;
+			case "easy" -> 18.0;
+			case "hard" -> 6.0;
+			default -> 11.0;
 		};
 		return (float) ((random.nextDouble() * 2.0 - 1.0) * e);
 	}
@@ -504,9 +513,9 @@ public class BrawlBot extends PathfinderMob {
 	/** 反応時間: easy 0.8秒 / normal 0.4秒 / hard 0.2秒。 */
 	private int reactTicks() {
 		return switch (difficulty) {
-			case "easy" -> 16;
-			case "hard" -> 4;
-			default -> 8;
+			case "easy" -> 20;
+			case "hard" -> 8;
+			default -> 13;
 		};
 	}
 

@@ -24,7 +24,7 @@ public final class BrawlerStats {
 
 	// ---- ラスティ ----
 	static final int RUSTY_HP = p(3900);
-	static final double RUSTY_SPEED = 2.4;
+	static final double RUSTY_SPEED = 2.57; // wiki: 770（2023/8/15）
 	static final double RUSTY_RELOAD = 1.5;
 	static final float RUSTY_SUPER_PER_HIT = 0.067f;
 	static final int RUSTY_PELLETS = 5, RUSTY_DMG = p(300);

@@ -60,7 +60,11 @@ public final class TopDownClient {
 		pendingClick |= click;
 		boolean held = mc.options.keyAttack.isDown() || (!inLobby && mc.options.keyUse.isDown());
 		if ((held || pendingClick) && tick - lastAttackSend >= 4) {
+			if (TopDown.lockedNow()) return; // 溜め中は次を撃たない
 			ClientPlayNetworking.send(new Net.AttackPayload(yaw, aimDistance(mc)));
+			if (HudState.hud != null && "frank".equals(HudState.hud.brawler()) && HudState.hud.ammo() >= 0.999f) {
+				TopDown.lockAim(yaw, 28); // ハンマーの溜め（1.3秒＋余裕）の間は向きを変えない
+			}
 			lastAttackSend = tick;
 			pendingClick = false;
 		}
