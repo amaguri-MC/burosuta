@@ -523,12 +523,14 @@ final class Attacks {
 		Vec3 start = new Vec3(u.getX(), u.getY() + 1.4, u.getZ());
 		Vec3 end = new Vec3(land.x, u.getY(), land.z);
 		int[] t = {0};
+		// 本家の弾速 1750（=0.583ブロック/tick）で飛ぶ時間
+		int flight = Math.max(6, (int) Math.round(Math.hypot(end.x - start.x, end.z - start.z) / BARLEY_LOB_SPEED_BPT));
 		Tasks.add(() -> {
 			t[0]++;
-			double f = Math.min(1.0, t[0] / (double) BARLEY_LOB_TICKS);
+			double f = Math.min(1.0, t[0] / (double) flight);
 			double y = start.y + (end.y - start.y) * f + 4 * 3.0 * f * (1 - f);
 			lvl.sendParticles(POTION_DUST, start.x + (end.x - start.x) * f, y, start.z + (end.z - start.z) * f, 2, 0.05, 0.05, 0.05, 0);
-			if (t[0] < BARLEY_LOB_TICKS) return false;
+			if (t[0] < flight) return false;
 			sound(lvl, end, SoundEvents.SPLASH_POTION_BREAK, 0.9f, 1.0f);
 			lvl.sendParticles(ParticleTypes.SPLASH, end.x, end.y + 0.3, end.z, 20, 0.6, 0.2, 0.6, 0.1);
 			puddle(lvl, u, end, puddleTicks, main);

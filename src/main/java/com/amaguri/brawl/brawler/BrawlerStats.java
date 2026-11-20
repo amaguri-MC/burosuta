@@ -28,7 +28,7 @@ public final class BrawlerStats {
 	static final double RUSTY_RELOAD = 1.5;
 	static final float RUSTY_SUPER_PER_HIT = 0.067f;
 	static final int RUSTY_PELLETS = 5, RUSTY_DMG = p(300);
-	static final double RUSTY_RANGE = 7.67, RUSTY_FAN = 30, RUSTY_SPEED_BPT = 1.0, RUSTY_PELLET_RADIUS = 0.35;
+	static final double RUSTY_RANGE = 7.67, RUSTY_FAN = 30, RUSTY_SPEED_BPT = 3100 / 3000.0, RUSTY_PELLET_RADIUS = 0.35;
 	static final int RUSTY_SUPER_PELLETS = 9, RUSTY_SUPER_DMG = p(320);
 	static final double RUSTY_SUPER_RANGE = 7.67, RUSTY_SUPER_FAN = 40, RUSTY_SUPER_KNOCK_TILES = 3;
 
@@ -51,7 +51,7 @@ public final class BrawlerStats {
 	static final double MIMOSA_RELOAD = 2.1;
 	static final float MIMOSA_SUPER_PER_HIT = 0.25f;
 	static final int MIMOSA_DMG = p(1180);
-	static final double MIMOSA_RANGE = 9.67, MIMOSA_SPEED_BPT = 0.8, MIMOSA_ROCKET_RADIUS = 0.4, MIMOSA_BLAST_TILES = 1;
+	static final double MIMOSA_RANGE = 9.67, MIMOSA_SPEED_BPT = 2700 / 3000.0, MIMOSA_ROCKET_RADIUS = 0.4, MIMOSA_BLAST_TILES = 1;
 	static final int MIMOSA_SUPER_ROCKETS = 9, MIMOSA_SUPER_DMG = p(1180), MIMOSA_SUPER_INTERVAL_TICKS = 3, MIMOSA_SUPER_FALL_TICKS = 8;
 	static final double MIMOSA_SUPER_CENTER_TILES = 7.67, MIMOSA_SUPER_AREA_TILES = 3;
 
@@ -130,7 +130,7 @@ public final class BrawlerStats {
 	static final double NITA_RELOAD = 1.1;
 	static final float NITA_SUPER_PER_HIT = 1f / 6f;
 	static final int NITA_DMG = p(880);
-	static final double NITA_RANGE = 5.5, NITA_WAVE_SPEED_BPT = 0.9, NITA_WAVE_RADIUS = 0.9; // UNVERIFIED
+	static final double NITA_RANGE = 5.5, NITA_WAVE_SPEED_BPT = 2718 / 3000.0, NITA_WAVE_RADIUS = 0.9; // UNVERIFIED
 	static final double NITA_SUPER_RANGE = 6.0; // UNVERIFIED: 相棒を呼ぶ最大距離（タイル）
 
 	// ---- 相棒のクマ（nitabear）。HP=ニタと同じ4000、速さ610/300、攻撃は UNVERIFIED ----
@@ -145,7 +145,9 @@ public final class BrawlerStats {
 	static final double BARLEY_RELOAD = 2.1;
 	static final float BARLEY_SUPER_PER_HIT = 0.1f;
 	static final double BARLEY_RANGE = 7.67;
-	static final int BARLEY_LOB_TICKS = 14;
+	static final int BARLEY_LOB_TICKS = 14; // 旧（未使用）
+	// 弾速: 本家の単位/秒 ÷ 3000 = ブロック/tick（300単位=1タイル=2ブロック、20tick/秒）
+	static final double BARLEY_LOB_SPEED_BPT = 1750 / 3000.0;
 	static final double BARLEY_PUDDLE_RADIUS_TILES = 2;
 	static final int BARLEY_PUDDLE_TICKS = 30, BARLEY_SUPER_PUDDLE_TICKS = 80;
 	static final int BARLEY_DPS = p(680), BARLEY_TICK_INTERVAL = 10; // 10tickごとに DPS/2
